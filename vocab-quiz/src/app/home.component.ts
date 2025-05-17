@@ -10,6 +10,7 @@ import { ImageUploadComponent } from './image-upload.component';
 import { CameraCaptureComponent } from './camera-capture.component';
 import { VocabularyVisualisationComponent } from './vocabulary-visualisation.component';
 import { OpenAiService } from './openai.service';
+import { VocabularyOpenAIResponse } from './ivocabulary-openai-response-interface';
 
 @Component({
   selector: 'app-home',
@@ -312,10 +313,10 @@ export class HomeComponent implements OnInit {
       
       try {
         // Use OpenAI service to extract vocabulary
-        const extractedText = await this.openai.extractVocabularyFromImage(file);
+        const extractedResponse = await this.openai.extractVocabularyFromImage(file);
         
-        if (extractedText) {
-          this.vocabStorage.setVocabulary(extractedText);
+        if (extractedResponse && extractedResponse.vocabulary && extractedResponse.vocabulary.length > 0) {
+          this.vocabStorage.setVocabulary(extractedResponse);
           // No need to manually update wizard state as header now listens to vocabulary changes
         } else {
           this.error = 'No vocabulary was extracted from the image.';

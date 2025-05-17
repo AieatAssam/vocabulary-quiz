@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ConfigurationService } from './configuration.service';
 import { OpenAI } from 'openai';
+import { VocabularyOpenAIResponse } from './ivocabulary-openai-response-interface';
 
 @Injectable({ providedIn: 'root' })
 export class OpenAiService {
@@ -17,9 +18,9 @@ export class OpenAiService {
   /**
    * Extract vocabulary from an image using OpenAI vision models.
    * @param file Image file (JPG/PNG)
-   * @returns Promise<string> - extracted text
+   * @returns Promise<VocabularyOpenAIResponse> - extracted vocabulary
    */
-  async extractVocabularyFromImage(file: File): Promise<string> {
+  async extractVocabularyFromImage(file: File): Promise<VocabularyOpenAIResponse> {
     const base64 = await this.fileToBase64(file);
     const model = this.config.getModel();
     try {
@@ -28,7 +29,13 @@ export class OpenAiService {
         messages: [
           {
             role: 'system',
-            content: 'You are an OCR assistant. Extract the vocabulary table (words and definitions) from the image. Format as two columns: word, definition.'
+            content: `You are an OCR assistant. Extract the vocabulary table (words and definitions) from the image. 
+Format as JSON object containing field "vocabulary" as an array of entries with two properties: 
+- "word"
+- "definitions" (array of definitions)
+
+When multiple definitions are supplied (synonyms or other words for the same meaning), include all of them as separate entries even if they are written together in the image.
+Only extract these from the image, do not supplement with any additional information!`
           },
           {
             role: 'user',
@@ -38,9 +45,10 @@ export class OpenAiService {
             ]
           }
         ],
-        max_tokens: 2048
+        max_tokens: 8000,
+        response_format: { type: 'json_object' }
       });
-      return response.choices[0]?.message?.content || '';
+      return JSON.parse(response.choices[0]?.message?.content || '{}') as VocabularyOpenAIResponse;
     } catch (err: any) {
       throw new Error(err?.message || 'Failed to extract vocabulary.');
     }

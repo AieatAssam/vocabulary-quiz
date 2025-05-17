@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { VocabularyOpenAIResponse } from './ivocabulary-openai-response-interface';
 
 @Injectable({ providedIn: 'root' })
 export class VocabularyStorageService {
   private imageSubject = new BehaviorSubject<File | null>(null);
-  private vocabSubject = new BehaviorSubject<string | null>(null);
+  private vocabSubject = new BehaviorSubject<VocabularyOpenAIResponse | null>(null);
 
   image$ = this.imageSubject.asObservable();
   vocab$ = this.vocabSubject.asObservable();
@@ -21,11 +22,11 @@ export class VocabularyStorageService {
     this.imageSubject.next(null);
   }
 
-  setVocabulary(vocab: string) {
+  setVocabulary(vocab: VocabularyOpenAIResponse) {
     this.vocabSubject.next(vocab);
   }
 
-  getVocabulary(): string | null {
+  getVocabulary(): VocabularyOpenAIResponse | null {
     return this.vocabSubject.value;
   }
 
@@ -39,33 +40,42 @@ export class VocabularyStorageService {
   }
 
   /**
-   * Validate the vocabulary string for two-column format (word, definition).
+   * Validate the vocabulary for proper structure.
    * Returns an object with isValid and errors array.
    */
-  validateVocabulary(vocab: string): { isValid: boolean; errors: string[] } {
+  validateVocabulary(vocab: VocabularyOpenAIResponse | null): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
-    if (!vocab || typeof vocab !== 'string') {
-      errors.push('Vocabulary is empty or not a string.');
+    
+    if (!vocab) {
+      errors.push('Vocabulary is empty.');
       return { isValid: false, errors };
     }
-    const lines = vocab.split(/\r?\n/).filter(line => line.trim().length > 0);
-    if (lines.length === 0) {
+    
+    if (!vocab.vocabulary || !Array.isArray(vocab.vocabulary)) {
+      errors.push('Invalid vocabulary format: missing vocabulary array.');
+      return { isValid: false, errors };
+    }
+    
+    if (vocab.vocabulary.length === 0) {
       errors.push('No vocabulary entries found.');
       return { isValid: false, errors };
     }
+    
     let validRows = 0;
-    lines.forEach((line, idx) => {
-      // Accept comma or tab as separator
-      const parts = line.split(/,|\t/).map(p => p.trim());
-      if (parts.length !== 2 || !parts[0] || !parts[1]) {
-        errors.push(`Line ${idx + 1} is not a valid word, definition pair: "${line}"`);
+    vocab.vocabulary.forEach((entry, idx) => {
+      if (!entry.word || typeof entry.word !== 'string') {
+        errors.push(`Entry ${idx + 1} is missing a valid word.`);
+      } else if (!entry.definitions || !Array.isArray(entry.definitions) || entry.definitions.length === 0) {
+        errors.push(`Entry ${idx + 1} (${entry.word}) is missing valid definitions.`);
       } else {
         validRows++;
       }
     });
+    
     if (validRows === 0) {
-      errors.push('No valid word-definition pairs found.');
+      errors.push('No valid vocabulary entries found.');
     }
+    
     return { isValid: errors.length === 0, errors };
   }
 } 

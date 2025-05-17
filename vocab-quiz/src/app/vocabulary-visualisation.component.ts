@@ -5,11 +5,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { VocabularyStorageService } from './vocabulary-storage.service';
+import { VocabularyOpenAIResponse } from './ivocabulary-openai-response-interface';
 
 interface VocabRow {
   word: string;
   definition: string;
-  error?: string;
+  error?: string | undefined;
 }
 
 @Component({
@@ -28,15 +29,15 @@ export class VocabularyVisualisationComponent implements OnInit {
 
   ngOnInit() {
     const vocab = this.vocabStorage.getVocabulary();
-    this.rows = this.parseRows(vocab || '');
+    this.rows = this.parseRows(vocab);
     
     // Calculate summary based on parsed rows
     const validRows = this.rows.filter(r => !r.error).length;
     const invalidRows = this.rows.filter(r => r.error).length;
     const errors: string[] = [];
     
-    if (!vocab || typeof vocab !== 'string') {
-      errors.push('Vocabulary is empty or not a string.');
+    if (!vocab) {
+      errors.push('Vocabulary is empty.');
     } else if (this.rows.length === 0) {
       errors.push('No vocabulary entries found.');
     } else if (invalidRows > 0) {
@@ -50,15 +51,30 @@ export class VocabularyVisualisationComponent implements OnInit {
     };
   }
 
-  private parseRows(vocab: string): VocabRow[] {
-    if (!vocab) return [];
-    const lines = vocab.split(/\r?\n/).filter(line => line.trim().length > 0);
-    return lines.map((line, idx) => {
-      const parts = line.split(/,|\t/).map(p => p.trim());
-      if (parts.length !== 2 || !parts[0] || !parts[1]) {
-        return { word: parts[0] || '', definition: parts[1] || '', error: `Invalid format` };
+  private parseRows(vocab: VocabularyOpenAIResponse | null): VocabRow[] {
+    if (!vocab || !vocab.vocabulary || !Array.isArray(vocab.vocabulary)) return [];
+    
+    const result: VocabRow[] = [];
+    
+    vocab.vocabulary.forEach((entry) => {
+      if (!entry.word || !entry.definitions || !Array.isArray(entry.definitions) || entry.definitions.length === 0) {
+        result.push({
+          word: entry.word || '',
+          definition: '',
+          error: 'Invalid entry format'
+        });
+      } else {
+        // Create a row for each definition
+        entry.definitions.forEach((def) => {
+          result.push({
+            word: entry.word,
+            definition: def,
+            error: undefined
+          });
+        });
       }
-      return { word: parts[0], definition: parts[1] };
     });
+    
+    return result;
   }
 } 
