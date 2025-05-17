@@ -66,10 +66,10 @@
 - [x] Build API settings component
 - [x] Implement API key management
 - [x] Add model selection interface
-- [ ] Create endpoint configuration
+- [x] Create endpoint configuration
 
 ### 3. Image Processing Module
-- [ ] Create image upload component
+- [x] Create image upload component
 - [ ] Implement camera capture functionality
 - [ ] Add image preview component
 - [ ] Implement basic image validation

@@ -1,0 +1,18 @@
+<div class="image-upload">
+  <input
+    type="file"
+    accept="image/jpeg,image/png"
+    (change)="onFileChange($event)"
+    id="fileInput"
+    hidden
+  />
+  <button mat-raised-button color="primary" (click)="document.getElementById('fileInput')?.click()">
+    <mat-icon>upload</mat-icon>
+    Upload Image
+  </button>
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="previewUrl" class="preview">
+    <img [src]="previewUrl" alt="Preview" />
+    <button mat-button color="warn" (click)="clear()">Clear</button>
+  </div>
+</div>
