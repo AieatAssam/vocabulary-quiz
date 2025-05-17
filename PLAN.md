@@ -76,8 +76,8 @@
 ### 4. Vocabulary Processing Module
 - [x] Create OpenAI service
 - [x] Implement vocabulary extraction
-- [ ] Add vocabulary validation
-- [ ] Add vocabulary visualisation
+- [x] Add vocabulary validation
+- [x] Add vocabulary visualisation
 - [x] Create vocabulary storage service
 - [x] Implement error handling
 
@@ -151,4 +151,45 @@
 - Implement proper loading states
 - Add helpful tooltips
 - Ensure responsive design
-- Implement proper keyboard navigation 
+- Implement proper keyboard navigation
+
+## Completed Tasks
+
+- [x] Initialize Angular project
+- [x] Set up routing
+- [x] Configure environment files
+- [x] Set up basic styling (Angular Material or similar)
+- [x] Create basic layout components
+- [x] Create configuration service (persist API configuration in session storage)
+- [x] Build API settings component
+- [x] Implement API key management
+- [x] Add model selection interface
+- [x] Create endpoint configuration
+- [x] Create image upload component (with integrated preview)
+- [x] Implement camera capture functionality (with integrated preview)
+- [x] Implement basic image validation (file type validation sufficient)
+- [x] Create OpenAI service
+- [x] Implement vocabulary extraction
+- [x] Add vocabulary validation
+- [x] Add vocabulary visualisation
+- [x] Create vocabulary storage service
+- [x] Implement error handling
+
+## In Progress Tasks
+
+## Implementation Plan
+
+### Vocabulary Visualisation Component
+
+- Create a new Angular component (e.g., `vocabulary-visualisation.component.ts`).
+- Display the extracted vocabulary in a modern, responsive table.
+- Highlight rows with validation errors (e.g., missing word/definition, wrong format).
+- Show a summary of validation results (number of valid/invalid rows, error messages).
+- Use Angular Material for a polished look (mat-table, mat-card, etc.).
+- Allow user to review and confirm the vocabulary before quiz generation.
+- Integrate with `VocabularyStorageService` for data and validation.
+
+### Relevant Files
+
+- src/app/vocabulary-visualisation.component.ts - Displays and validates vocabulary visually
+- src/app/vocabulary-storage.service.ts - Stores and validates vocabulary data 
