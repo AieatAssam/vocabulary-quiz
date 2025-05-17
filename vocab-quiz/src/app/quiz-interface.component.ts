@@ -92,6 +92,15 @@ import { Quiz, QuizQuestion } from './quiz.service';
                 <p *ngIf="!currentQuestion?.isCorrect" class="correct-answer">
                   Correct answer: {{ currentQuestion?.answer }}
                 </p>
+                <!-- Show multiple answers only for definition questions with multiple answers -->
+                <ng-container *ngIf="!currentQuestion?.isCorrect && currentQuestion?.type === 'definition'">
+                  <div *ngIf="hasMultipleAnswers()" class="all-answers">
+                    <p class="all-answers-title">All accepted answers:</p>
+                    <ul>
+                      <li *ngFor="let answer of getAllAnswers()">{{ answer }}</li>
+                    </ul>
+                  </div>
+                </ng-container>
               </div>
             </div>
           </div>
@@ -138,13 +147,13 @@ import { Quiz, QuizQuestion } from './quiz.service';
         <mat-card class="results-card">
           <h2 class="results-score">
             <mat-icon [color]="getScoreColor()">{{ getScoreIcon() }}</mat-icon>
-            Score: {{ currentQuiz.score !== undefined ? currentQuiz.score.toFixed(0) : '0' }}%
+            Score: {{ getScoreDisplay() }}%
           </h2>
           
           <div class="results-summary">
-            <p>Correct answers: {{ getCorrectAnswerCount() }} / {{ currentQuiz.questions.length || 0 }}</p>
-            <p>Quiz type: {{ currentQuiz.settings.quizType | titlecase }}</p>
-            <p *ngIf="currentQuiz.startTime && currentQuiz.endTime">
+            <p>Correct answers: {{ getCorrectAnswerCount() }} / {{ getQuestionCount() }}</p>
+            <p>Quiz type: {{ getQuizType() }}</p>
+            <p *ngIf="hasQuizTimes()">
               Time taken: {{ calculateTimeTaken() }}
             </p>
           </div>
@@ -279,6 +288,26 @@ import { Quiz, QuizQuestion } from './quiz.service';
     .correct-answer {
       font-style: italic;
       margin-top: 0.5rem !important;
+      color: #555;
+    }
+
+    .all-answers {
+      margin-top: 0.5rem;
+    }
+    
+    .all-answers-title {
+      font-weight: 500;
+      margin-bottom: 0.25rem !important;
+      color: #555;
+    }
+    
+    .all-answers ul {
+      margin: 0;
+      padding-left: 1.5rem;
+    }
+    
+    .all-answers li {
+      margin-bottom: 0.25rem;
       color: #555;
     }
 
@@ -468,5 +497,52 @@ export class QuizInterfaceComponent implements OnInit {
   @HostListener('window:keyup.enter', ['$event'])
   handleEnterKeyUp(event: KeyboardEvent) {
     this.enterKeyState = 'up';
+  }
+
+  /**
+   * Checks if the current question has multiple accepted answers
+   */
+  hasMultipleAnswers(): boolean {
+    return this.currentQuestion?.allAnswers !== undefined && 
+           this.currentQuestion.allAnswers.length > 1;
+  }
+  
+  /**
+   * Gets all answers for the current question or empty array if none
+   */
+  getAllAnswers(): string[] {
+    return this.currentQuestion?.allAnswers || [];
+  }
+  
+  /**
+   * Gets the formatted score for display
+   */
+  getScoreDisplay(): string {
+    if (!this.currentQuiz || this.currentQuiz.score === undefined) {
+      return '0';
+    }
+    return this.currentQuiz.score.toFixed(0);
+  }
+  
+  /**
+   * Gets the total number of questions
+   */
+  getQuestionCount(): number {
+    return this.currentQuiz?.questions?.length || 0;
+  }
+  
+  /**
+   * Gets the quiz type formatted for display
+   */
+  getQuizType(): string {
+    const quizType = this.currentQuiz?.settings?.quizType || 'unknown';
+    return quizType.charAt(0).toUpperCase() + quizType.slice(1);
+  }
+  
+  /**
+   * Checks if quiz has valid start and end times
+   */
+  hasQuizTimes(): boolean {
+    return !!this.currentQuiz?.startTime && !!this.currentQuiz?.endTime;
   }
 } 
