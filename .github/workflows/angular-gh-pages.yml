@@ -32,8 +32,9 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: lts/*
           cache: 'npm'
+          cache-dependency-path: vocab-quiz
       - name: Install dependencies
         uses: bahmutov/npm-install@v1.6.0
         with:
