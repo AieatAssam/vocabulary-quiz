@@ -36,15 +36,13 @@ jobs:
           cache: 'npm'
           cache-dependency-path: vocab-quiz
       - name: Install dependencies
-        uses: bahmutov/npm-install@v1.6.0
-        with:
-          working-directory: vocab-quiz
+        run: cd vocab-quiz && npm install
       - name: Build
-        run: npm run build-prod
+        run: cd vocab-quiz && npm run build-prod
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/vocab-quiz
+          path: vocab-quiz/dist/vocab-quiz
 
   # Deployment job
   deploy:
