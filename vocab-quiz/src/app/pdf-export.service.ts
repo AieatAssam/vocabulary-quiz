@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Quiz, QuizQuestion } from './quiz.service';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+// Remove the imports here and load them dynamically when needed
+// import jsPDF from 'jspdf';
+// import html2canvas from 'html2canvas';
 
 @Injectable({
   providedIn: 'root'
@@ -16,31 +17,44 @@ export class PdfExportService {
    * @param name Optional name to display on the certificate
    */
   async exportQuizResults(quiz: Quiz, name?: string): Promise<void> {
-    // Create PDF document with A4 size
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
-    
-    // Create certificate page
-    this.addCertificatePage(pdf, quiz, name);
-    
-    // Add page break
-    pdf.addPage();
-    
-    // Add detailed results
-    this.addDetailedResults(pdf, quiz);
-    
-    // Save and download the PDF
-    const filename = `vocabulary-quiz-results-${new Date().toISOString().slice(0, 10)}.pdf`;
-    pdf.save(filename);
+    try {
+      // Dynamically import jsPDF
+      const jsPDFModule = await import('jspdf');
+      const jsPDF = jsPDFModule.default;
+      
+      // Dynamically import html2canvas if needed
+      // const html2canvasModule = await import('html2canvas');
+      // const html2canvas = html2canvasModule.default;
+      
+      // Create PDF document with A4 size
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // Create certificate page
+      this.addCertificatePage(pdf, quiz, name);
+      
+      // Add page break
+      pdf.addPage();
+      
+      // Add detailed results
+      this.addDetailedResults(pdf, quiz);
+      
+      // Save and download the PDF
+      const filename = `vocabulary-quiz-results-${new Date().toISOString().slice(0, 10)}.pdf`;
+      pdf.save(filename);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      throw error;
+    }
   }
   
   /**
    * Adds a certificate-style page to the PDF
    */
-  private addCertificatePage(pdf: jsPDF, quiz: Quiz, name?: string): void {
+  private addCertificatePage(pdf: any, quiz: Quiz, name?: string): void {
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 20;
@@ -131,7 +145,7 @@ export class PdfExportService {
   /**
    * Adds a detailed breakdown of quiz results
    */
-  private addDetailedResults(pdf: jsPDF, quiz: Quiz): void {
+  private addDetailedResults(pdf: any, quiz: Quiz): void {
     const pageWidth = pdf.internal.pageSize.getWidth();
     const margin = 20;
     let yPosition = 20;
@@ -320,7 +334,7 @@ export class PdfExportService {
   /**
    * Splits text to fit within specified width
    */
-  private splitTextToFit(pdf: jsPDF, text: string, maxWidth: number): string[] {
+  private splitTextToFit(pdf: any, text: string, maxWidth: number): string[] {
     // First check if the text fits as is
     if (pdf.getStringUnitWidth(text) * 12 / pdf.internal.scaleFactor <= maxWidth) {
       return [text];

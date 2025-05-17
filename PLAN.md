@@ -192,13 +192,13 @@
 - [x] Add new quiz generation functionality
 - [x] Support multiple valid definitions for questions
 - [x] Implement PDF export with certificate and detailed results
+- [x] Optimize bundle size through lazy loading and dynamic imports
 
 ## In Progress Tasks
 
 - [ ] Implement semantic matching logic for answers
 - [ ] Create confirmation dialogs
 - [ ] Add comprehensive documentation
-- [ ] Optimize performance
 
 ## Implementation Plan
 

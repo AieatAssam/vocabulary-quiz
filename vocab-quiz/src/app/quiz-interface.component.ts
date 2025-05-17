@@ -15,6 +15,7 @@ import { VocabularyStorageService } from './vocabulary-storage.service';
 import { Quiz, QuizQuestion } from './quiz.service';
 import { PdfExportService } from './pdf-export.service';
 import { NameDialogComponent, NameDialogData } from './name-dialog.component';
+import { DialogComponent } from './dialog.component';
 
 @Component({
   selector: 'app-quiz-interface',
@@ -575,8 +576,18 @@ export class QuizInterfaceComponent implements OnInit {
     dialogRef.afterClosed().subscribe(async (result) => {
       if (result) {
         try {
+          // Show loading indicator
+          const loadingDialog = this.dialog.open(DialogComponent, {
+            width: '250px',
+            disableClose: true,
+            data: { message: 'Generating PDF, please wait...' }
+          });
+          
           // Pass the name to the PDF export service
           await this.pdfExportService.exportQuizResults(this.currentQuiz!, result);
+          
+          // Close loading dialog
+          loadingDialog.close();
         } catch (error) {
           console.error('Failed to export PDF:', error);
           alert('Failed to generate PDF. Please try again.');
