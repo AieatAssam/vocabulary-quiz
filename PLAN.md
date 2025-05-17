@@ -64,8 +64,8 @@
 ### 2. Configuration Module
 - [x] Create configuration service
 - [x] Build API settings component
-- [ ] Implement API key management
-- [ ] Add model selection interface
+- [x] Implement API key management
+- [x] Add model selection interface
 - [ ] Create endpoint configuration
 
 ### 3. Image Processing Module

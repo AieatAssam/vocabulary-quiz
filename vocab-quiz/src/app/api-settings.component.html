@@ -13,11 +13,18 @@
   </mat-form-field>
 
   <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Model (optional)</mat-label>
-    <input matInput formControlName="model" autocomplete="off" />
+    <mat-label>Model</mat-label>
+    <mat-select formControlName="model">
+      <mat-option *ngFor="let m of models" [value]="m.value">{{ m.label }}</mat-option>
+    </mat-select>
   </mat-form-field>
 
-  <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
+  <mat-form-field *ngIf="isCustomModel" appearance="outline" class="full-width">
+    <mat-label>Custom Model Name</mat-label>
+    <input matInput formControlName="customModel" autocomplete="off" />
+  </mat-form-field>
+
+  <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || (isCustomModel && !form.value.customModel)">
     Save Settings
   </button>
 </form>
