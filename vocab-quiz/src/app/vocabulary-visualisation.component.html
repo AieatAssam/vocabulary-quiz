@@ -1,0 +1,32 @@
+<mat-card class="vocab-card">
+  <h2>Vocabulary Visualisation</h2>
+  <div *ngIf="summary">
+    <div class="summary">
+      <span><mat-icon color="primary">check_circle</mat-icon> Valid: {{summary.valid}}</span>
+      <span><mat-icon color="warn">error</mat-icon> Invalid: {{summary.invalid}}</span>
+    </div>
+    <div *ngIf="summary.errors.length > 0" class="error-list">
+      <mat-icon color="warn">warning</mat-icon>
+      <span *ngFor="let err of summary.errors">{{err}}</span>
+    </div>
+  </div>
+  <table mat-table [dataSource]="rows" class="mat-elevation-z2">
+    <ng-container matColumnDef="word">
+      <th mat-header-cell *matHeaderCellDef>Word</th>
+      <td mat-cell *matCellDef="let row" [class.error-row]="row.error">{{row.word}}</td>
+    </ng-container>
+    <ng-container matColumnDef="definition">
+      <th mat-header-cell *matHeaderCellDef>Definition</th>
+      <td mat-cell *matCellDef="let row" [class.error-row]="row.error">{{row.definition}}</td>
+    </ng-container>
+    <ng-container matColumnDef="error">
+      <th mat-header-cell *matHeaderCellDef>Error</th>
+      <td mat-cell *matCellDef="let row">{{row.error || ''}}</td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.error-row]="row.error"></tr>
+  </table>
+  <div class="actions">
+    <button mat-raised-button color="primary" [disabled]="summary && summary.invalid > 0">Confirm Vocabulary</button>
+  </div>
+</mat-card> 

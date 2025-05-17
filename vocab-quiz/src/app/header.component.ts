@@ -46,7 +46,10 @@ export class HeaderComponent implements OnInit {
 
   onLoadImageStep(): void {
     if (this.configComplete) {
-      this.router.navigate(['/']);
+      // Force reloading current route
+      this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+        this.router.navigate(['/']);
+      });
     }
   }
 

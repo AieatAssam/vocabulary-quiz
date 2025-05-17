@@ -1,0 +1,30 @@
+.vocab-card { 
+  max-width: 700px; 
+  margin: 2rem auto; 
+  padding: 2rem; 
+}
+
+.summary { 
+  display: flex; 
+  gap: 2rem; 
+  margin-bottom: 1rem; 
+  font-size: 1.1rem; 
+}
+
+.error-list { 
+  color: #d32f2f; 
+  margin-bottom: 1rem; 
+}
+
+.error-row { 
+  background: #fff3e0 !important; 
+}
+
+table { 
+  width: 100%; 
+  margin-bottom: 1rem; 
+}
+
+.actions { 
+  text-align: right; 
+} 

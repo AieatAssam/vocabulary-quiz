@@ -8,7 +8,7 @@
     </div>
     <div class="wizard-divider"></div>
     <div class="wizard-step" [class.disabled]="!configComplete" [class.complete]="imageLoaded" [class.clickable]="configComplete" (click)="onLoadImageStep()">
-      <span>2. Load Image</span>
+      <span>2. Extract Vocabulary</span>
       <mat-icon *ngIf="imageLoaded" color="primary">check_circle</mat-icon>
       <mat-icon *ngIf="!imageLoaded">image</mat-icon>
     </div>
