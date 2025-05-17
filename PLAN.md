@@ -74,16 +74,16 @@
 - [x] Implement basic image validation (file type validation sufficient)
 
 ### 4. Vocabulary Processing Module
-- [ ] Create OpenAI service
-- [ ] Implement vocabulary extraction
+- [x] Create OpenAI service
+- [x] Implement vocabulary extraction
 - [ ] Add vocabulary validation
 - [ ] Add vocabulary visualisation
-- [ ] Create vocabulary storage service
-- [ ] Implement error handling
+- [x] Create vocabulary storage service
+- [x] Implement error handling
 
 ### 5. Quiz Configuration Module
 - [ ] Create quiz settings component
-- [ ] Implement quiz type selection
+- [~] Implement quiz type selection (test harness only)
 - [ ] Add question count configuration
 - [ ] Create quiz generation service
 - [ ] Implement semantic matching logic
@@ -103,14 +103,14 @@
 - [ ] Implement new quiz generation
 
 ### 8. Shared Components
-- [ ] Create header component
-- [ ] Implement loading indicators
-- [ ] Add error messages
+- [x] Create header component
+- [~] Implement loading indicators (present in some components)
+- [~] Add error messages (present in some components)
 - [ ] Create confirmation dialogs
-- [ ] Implement responsive layout
+- [x] Implement responsive layout
 
 ### 9. Testing & Documentation
-- [ ] Write unit tests
+- [~] Write unit tests (default Angular test present)
 - [ ] Add integration tests
 - [ ] Create user documentation
 - [ ] Add inline code documentation
