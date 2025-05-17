@@ -71,7 +71,7 @@
 ### 3. Image Processing Module
 - [x] Create image upload component (with integrated preview)
 - [x] Implement camera capture functionality (with integrated preview)
-- [ ] Implement basic image validation
+- [x] Implement basic image validation (file type validation sufficient)
 
 ### 4. Vocabulary Processing Module
 - [ ] Create OpenAI service
