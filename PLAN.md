@@ -62,7 +62,7 @@
 - [x] Create basic layout components
 
 ### 2. Configuration Module
-- [ ] Create configuration service
+- [x] Create configuration service
 - [ ] Build API settings component
 - [ ] Implement API key management
 - [ ] Add model selection interface
