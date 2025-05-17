@@ -56,8 +56,8 @@
 
 ### 1. Project Setup
 - [x] Initialize Angular project
-- [ ] Set up routing
-- [ ] Configure environment files
+- [x] Set up routing
+- [x] Configure environment files
 - [ ] Set up basic styling (Angular Material or similar)
 - [ ] Create basic layout components
 
