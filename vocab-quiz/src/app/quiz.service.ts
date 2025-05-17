@@ -8,6 +8,7 @@ export interface QuizQuestion {
   type: 'word' | 'definition';
   prompt: string;
   answer: string;
+  allAnswers?: string[]; // All possible correct answers (for definition questions)
   options?: string[]; // For multiple choice (future feature)
   userAnswer?: string;
   isCorrect?: boolean;
@@ -132,7 +133,8 @@ export class QuizService {
           id: questionPool.length,
           type: 'definition',
           prompt: entry.word,
-          answer: entry.definitions[0] // Using first definition as the primary answer
+          answer: entry.definitions[0], // Using first definition as the primary answer
+          allAnswers: [...entry.definitions] // Store all definitions as valid answers
         });
       }
 
@@ -187,12 +189,18 @@ export class QuizService {
   }
 
   private checkAnswer(question: QuizQuestion, userAnswer: string): boolean {
-    // Simple string comparison for now
-    // Later we can implement a more sophisticated matching algorithm
-    // For example, using similarity metrics or allowing partial matches
     const normalizedUserAnswer = userAnswer.trim().toLowerCase();
-    const normalizedCorrectAnswer = question.answer.trim().toLowerCase();
     
+    // For definition questions with multiple valid answers
+    if (question.type === 'definition' && question.allAnswers && question.allAnswers.length > 0) {
+      // Check if the user's answer matches any of the valid definitions
+      return question.allAnswers.some(answer => 
+        answer.trim().toLowerCase() === normalizedUserAnswer
+      );
+    } 
+    
+    // For word questions or if there are no multiple definitions
+    const normalizedCorrectAnswer = question.answer.trim().toLowerCase();
     return normalizedUserAnswer === normalizedCorrectAnswer;
   }
 
