@@ -62,16 +62,15 @@
 - [x] Create basic layout components
 
 ### 2. Configuration Module
-- [x] Create configuration service
+- [x] Create configuration service (persist API configuration in session storage)
 - [x] Build API settings component
 - [x] Implement API key management
 - [x] Add model selection interface
 - [x] Create endpoint configuration
 
 ### 3. Image Processing Module
-- [x] Create image upload component
-- [ ] Implement camera capture functionality
-- [ ] Add image preview component
+- [x] Create image upload component (with integrated preview)
+- [x] Implement camera capture functionality (with integrated preview)
 - [ ] Implement basic image validation
 
 ### 4. Vocabulary Processing Module
