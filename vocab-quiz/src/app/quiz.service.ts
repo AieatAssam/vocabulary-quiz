@@ -188,19 +188,34 @@ export class QuizService {
     }
   }
 
+  /**
+   * Normalize text for comparison by removing case sensitivity,
+   * extra whitespace, and punctuation
+   */
+  private normalizeText(text: string): string {
+    if (!text) return '';
+    
+    return text
+      .toLowerCase()            // Convert to lowercase
+      .trim()                   // Remove leading/trailing whitespace
+      .replace(/\s+/g, ' ')     // Normalize spaces (multiple spaces to single space)
+      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '') // Remove punctuation
+      .replace(/\s+([,.])/g, '$1');  // Remove spaces before commas and periods
+  }
+
   private checkAnswer(question: QuizQuestion, userAnswer: string): boolean {
-    const normalizedUserAnswer = userAnswer.trim().toLowerCase();
+    const normalizedUserAnswer = this.normalizeText(userAnswer);
     
     // For definition questions with multiple valid answers
     if (question.type === 'definition' && question.allAnswers && question.allAnswers.length > 0) {
       // Check if the user's answer matches any of the valid definitions
       return question.allAnswers.some(answer => 
-        answer.trim().toLowerCase() === normalizedUserAnswer
+        this.normalizeText(answer) === normalizedUserAnswer
       );
     } 
     
     // For word questions or if there are no multiple definitions
-    const normalizedCorrectAnswer = question.answer.trim().toLowerCase();
+    const normalizedCorrectAnswer = this.normalizeText(question.answer);
     return normalizedUserAnswer === normalizedCorrectAnswer;
   }
 
