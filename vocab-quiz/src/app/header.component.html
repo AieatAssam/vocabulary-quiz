@@ -1,6 +1,22 @@
-<header class="header-bar">
+<header class="header-bar wizard-header">
   <span class="app-title">Vocabulary Quiz</span>
-  <button mat-raised-button color="primary" (click)="openSettings()">
-    API Settings
-  </button>
+  <nav class="wizard-steps">
+    <div class="wizard-step" [class.complete]="configComplete" [class.clickable]="true" (click)="openSettings()">
+      <span>1. Config</span>
+      <mat-icon *ngIf="configComplete">check_circle</mat-icon>
+      <mat-icon *ngIf="!configComplete">settings</mat-icon>
+    </div>
+    <div class="wizard-divider"></div>
+    <div class="wizard-step" [class.disabled]="!configComplete" [class.complete]="imageLoaded" [class.clickable]="configComplete" (click)="onLoadImageStep()">
+      <span>2. Load Image</span>
+      <mat-icon *ngIf="imageLoaded" color="primary">check_circle</mat-icon>
+      <mat-icon *ngIf="!imageLoaded">image</mat-icon>
+    </div>
+    <div class="wizard-divider"></div>
+    <div class="wizard-step" [class.disabled]="!imageLoaded" [class.complete]="quizStarted" [class.clickable]="imageLoaded" (click)="onDoQuizStep()">
+      <span>3. Do Quiz</span>
+      <mat-icon *ngIf="quizStarted" color="primary">check_circle</mat-icon>
+      <mat-icon *ngIf="!quizStarted">quiz</mat-icon>
+    </div>
+  </nav>
 </header>

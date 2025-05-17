@@ -15,3 +15,58 @@
   font-weight: 600;
   color: #333;
 }
+
+.wizard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wizard-steps {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #888;
+  transition: color 0.2s, background 0.2s;
+  padding: 0.5rem 1.2rem;
+  border-radius: 1.2rem;
+  user-select: none;
+}
+
+.wizard-step.complete {
+  color: #388e3c;
+}
+
+.wizard-step.clickable {
+  cursor: pointer;
+  background: #f5f5f5;
+}
+
+.wizard-step.clickable:hover {
+  background: #e3f2fd;
+  color: #1976d2;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+}
+
+.wizard-step .mat-icon {
+  vertical-align: middle;
+}
+
+.wizard-step.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.wizard-divider {
+  width: 32px;
+  height: 2px;
+  background: #e0e0e0;
+  border-radius: 1px;
+}
