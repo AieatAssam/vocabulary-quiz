@@ -12,6 +12,7 @@ import { QuizService } from './quiz.service';
 import { QuizSettingsComponent, QuizSettings } from './quiz-settings.component';
 import { VocabularyStorageService } from './vocabulary-storage.service';
 import { Quiz, QuizQuestion } from './quiz.service';
+import { PdfExportService } from './pdf-export.service';
 
 @Component({
   selector: 'app-quiz-interface',
@@ -164,6 +165,12 @@ import { Quiz, QuizQuestion } from './quiz.service';
               color="primary"
               (click)="viewVocabulary()">
               <mat-icon>view_list</mat-icon> View Vocabulary
+            </button>
+            <button 
+              mat-button 
+              color="accent"
+              (click)="exportResultsAsPdf()">
+              <mat-icon>picture_as_pdf</mat-icon> Export Results as PDF
             </button>
             <button 
               mat-raised-button 
@@ -361,6 +368,7 @@ export class QuizInterfaceComponent implements OnInit {
   constructor(
     private quizService: QuizService,
     private vocabStorage: VocabularyStorageService,
+    private pdfExportService: PdfExportService,
     private router: Router
   ) {}
 
@@ -544,5 +552,21 @@ export class QuizInterfaceComponent implements OnInit {
    */
   hasQuizTimes(): boolean {
     return !!this.currentQuiz?.startTime && !!this.currentQuiz?.endTime;
+  }
+
+  /**
+   * Exports the quiz results as a PDF document
+   */
+  async exportResultsAsPdf(): Promise<void> {
+    if (!this.currentQuiz || !this.currentQuiz.isComplete) {
+      return;
+    }
+    
+    try {
+      await this.pdfExportService.exportQuizResults(this.currentQuiz);
+    } catch (error) {
+      console.error('Failed to export PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   }
 } 

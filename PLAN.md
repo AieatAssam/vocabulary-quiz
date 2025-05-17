@@ -102,7 +102,7 @@
 - [x] Create results display component
 - [x] Implement score calculation
 - [x] Add basic error reporting
-- [ ] Create export functionality
+- [x] Create export functionality (PDF certificate and detailed results)
 - [x] Implement new quiz generation
 
 ### 8. Shared Components
@@ -191,11 +191,11 @@
 - [x] Implement score calculation
 - [x] Add new quiz generation functionality
 - [x] Support multiple valid definitions for questions
+- [x] Implement PDF export with certificate and detailed results
 
 ## In Progress Tasks
 
 - [ ] Implement semantic matching logic for answers
-- [ ] Create export functionality for quiz results
 - [ ] Create confirmation dialogs
 - [ ] Add comprehensive documentation
 - [ ] Optimize performance
