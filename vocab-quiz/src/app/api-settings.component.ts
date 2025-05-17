@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Optional } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ConfigurationService } from './configuration.service';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-api-settings',
@@ -37,7 +38,8 @@ export class ApiSettingsComponent {
 
   constructor(
     private fb: FormBuilder,
-    private config: ConfigurationService
+    private config: ConfigurationService,
+    @Optional() private dialogRef?: MatDialogRef<ApiSettingsComponent>
   ) {
     const currentModel = this.config.getModel();
     this.form = this.fb.group({
@@ -64,6 +66,9 @@ export class ApiSettingsComponent {
       this.config.setApiKey(this.form.value.apiKey);
       this.config.setEndpoint(this.form.value.endpoint);
       this.config.setModel(model);
+      if (this.dialogRef) {
+        this.dialogRef.close();
+      }
     }
   }
 }
