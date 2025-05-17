@@ -58,7 +58,7 @@
 - [x] Initialize Angular project
 - [x] Set up routing
 - [x] Configure environment files
-- [ ] Set up basic styling (Angular Material or similar)
+- [x] Set up basic styling (Angular Material or similar)
 - [ ] Create basic layout components
 
 ### 2. Configuration Module
