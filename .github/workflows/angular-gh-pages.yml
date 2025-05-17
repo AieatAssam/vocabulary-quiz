@@ -42,7 +42,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: vocab-quiz/dist/vocab-quiz
+          path: vocab-quiz/dist/vocab-quiz/browser
 
   # Deployment job
   deploy:
