@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: cd vocab-quiz && npm install
       - name: Build
-        run: cd vocab-quiz && npm run build-prod
+        run: cd vocab-quiz && npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
