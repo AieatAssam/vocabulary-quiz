@@ -83,7 +83,6 @@
 
 ### 5. Quiz Configuration Module
 - [ ] Create quiz settings component
-- [~] Implement quiz type selection (test harness only)
 - [ ] Add question count configuration
 - [ ] Create quiz generation service
 - [ ] Implement semantic matching logic

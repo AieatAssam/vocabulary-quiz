@@ -4,77 +4,78 @@ import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { VocabularyStorageService } from './vocabulary-storage.service';
 import { VocabularyOpenAIResponse } from './ivocabulary-openai-response-interface';
 
-interface VocabRow {
+interface VocabEntry {
   word: string;
-  definition: string;
+  definitions: string[];
   error?: string | undefined;
 }
 
 @Component({
   selector: 'app-vocabulary-visualisation',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatCardModule, MatIconModule, MatButtonModule],
+  imports: [
+    CommonModule, 
+    MatTableModule, 
+    MatCardModule, 
+    MatIconModule, 
+    MatButtonModule,
+    MatChipsModule
+  ],
   templateUrl: './vocabulary-visualisation.component.html',
   styleUrls: ['./vocabulary-visualisation.component.scss']
 })
 export class VocabularyVisualisationComponent implements OnInit {
-  rows: VocabRow[] = [];
-  displayedColumns = ['word', 'definition', 'error'];
+  vocabEntries: VocabEntry[] = [];
+  displayedColumns = ['word', 'definitions', 'actions'];
   summary: { valid: number; invalid: number; errors: string[] } | null = null;
 
   constructor(private vocabStorage: VocabularyStorageService) {}
 
   ngOnInit() {
     const vocab = this.vocabStorage.getVocabulary();
-    this.rows = this.parseRows(vocab);
+    this.vocabEntries = this.parseVocabulary(vocab);
     
-    // Calculate summary based on parsed rows
-    const validRows = this.rows.filter(r => !r.error).length;
-    const invalidRows = this.rows.filter(r => r.error).length;
+    // Calculate summary based on parsed entries
+    const validEntries = this.vocabEntries.filter(e => !e.error).length;
+    const invalidEntries = this.vocabEntries.filter(e => e.error).length;
     const errors: string[] = [];
     
     if (!vocab) {
       errors.push('Vocabulary is empty.');
-    } else if (this.rows.length === 0) {
+    } else if (this.vocabEntries.length === 0) {
       errors.push('No vocabulary entries found.');
-    } else if (invalidRows > 0) {
-      errors.push(`${invalidRows} invalid entries found.`);
+    } else if (invalidEntries > 0) {
+      errors.push(`${invalidEntries} invalid entries found.`);
     }
     
     this.summary = {
-      valid: validRows,
-      invalid: invalidRows,
+      valid: validEntries,
+      invalid: invalidEntries,
       errors
     };
   }
 
-  private parseRows(vocab: VocabularyOpenAIResponse | null): VocabRow[] {
+  private parseVocabulary(vocab: VocabularyOpenAIResponse | null): VocabEntry[] {
     if (!vocab || !vocab.vocabulary || !Array.isArray(vocab.vocabulary)) return [];
     
-    const result: VocabRow[] = [];
-    
-    vocab.vocabulary.forEach((entry) => {
+    return vocab.vocabulary.map(entry => {
       if (!entry.word || !entry.definitions || !Array.isArray(entry.definitions) || entry.definitions.length === 0) {
-        result.push({
+        return {
           word: entry.word || '',
-          definition: '',
+          definitions: [],
           error: 'Invalid entry format'
-        });
+        };
       } else {
-        // Create a row for each definition
-        entry.definitions.forEach((def) => {
-          result.push({
-            word: entry.word,
-            definition: def,
-            error: undefined
-          });
-        });
+        return {
+          word: entry.word,
+          definitions: entry.definitions,
+          error: undefined
+        };
       }
     });
-    
-    return result;
   }
 } 

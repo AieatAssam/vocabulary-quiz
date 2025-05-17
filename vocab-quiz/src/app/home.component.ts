@@ -250,7 +250,7 @@ export class HomeComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Check if vocabulary is already loaded
+    // Check if vocabulary is already loaded (either in memory or from localStorage)
     this.hasVocabulary = !!this.vocabStorage.getVocabulary();
     
     // Determine current step based on state
@@ -307,6 +307,7 @@ export class HomeComponent implements OnInit {
   
   async onImageSelected(file: File) {
     if (file) {
+      // Setting the image will automatically clear existing vocabulary
       this.vocabStorage.setImage(file);
       this.currentStep = 'processing';
       this.error = '';
