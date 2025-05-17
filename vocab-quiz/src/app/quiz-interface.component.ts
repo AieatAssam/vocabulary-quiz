@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -110,21 +110,21 @@ import { Quiz, QuizQuestion } from './quiz.service';
               color="primary" 
               *ngIf="!answerSubmitted"
               (click)="submitAnswer()">
-              <mat-icon>send</mat-icon> Submit
+              <mat-icon>send</mat-icon> Submit (Enter)
             </button>
             <button 
               mat-raised-button 
               color="primary" 
               *ngIf="answerSubmitted && !isLastQuestion"
               (click)="nextQuestion()">
-              <mat-icon>arrow_forward</mat-icon> Next
+              <mat-icon>arrow_forward</mat-icon> Next (Enter)
             </button>
             <button 
               mat-raised-button 
               color="accent" 
               *ngIf="answerSubmitted && isLastQuestion"
               (click)="completeQuiz()">
-              <mat-icon>done_all</mat-icon> Finish Quiz
+              <mat-icon>done_all</mat-icon> Finish Quiz (Enter)
             </button>
           </div>
         </mat-card>
@@ -326,6 +326,8 @@ export class QuizInterfaceComponent implements OnInit {
   currentQuiz: Quiz | null = null;
   userAnswer: string = '';
   answerSubmitted: boolean = false;
+  private enterKeyState: 'up' | 'down' = 'up';
+  private enterActionState: 'ready' | 'submitted' | 'next' = 'ready';
 
   constructor(
     private quizService: QuizService,
@@ -373,6 +375,7 @@ export class QuizInterfaceComponent implements OnInit {
 
     this.quizService.submitAnswer(this.userAnswer.trim());
     this.answerSubmitted = true;
+    this.enterActionState = 'submitted';
   }
 
   nextQuestion() {
@@ -381,6 +384,7 @@ export class QuizInterfaceComponent implements OnInit {
     if (this.quizService.nextQuestion()) {
       this.answerSubmitted = false;
       this.userAnswer = '';
+      this.enterActionState = 'ready';
     }
   }
 
@@ -388,6 +392,7 @@ export class QuizInterfaceComponent implements OnInit {
     if (!this.currentQuiz || !this.answerSubmitted) return;
 
     this.quizService.completeQuiz();
+    this.enterActionState = 'ready';
   }
 
   startNewQuiz() {
@@ -430,5 +435,38 @@ export class QuizInterfaceComponent implements OnInit {
     if (this.currentQuiz.score >= 80) return 'emoji_events';
     if (this.currentQuiz.score >= 60) return 'thumb_up';
     return 'sentiment_neutral';
+  }
+
+  // Track Enter key down
+  @HostListener('window:keydown.enter', ['$event'])
+  handleEnterKeyDown(event: KeyboardEvent) {
+    // Only process if the key was previously up
+    if (this.enterKeyState === 'up') {
+      this.enterKeyState = 'down';
+
+      // Prevent default to avoid form submissions or button clicks
+      event.preventDefault();
+
+      // If we're ready to submit an answer
+      if (this.enterActionState === 'ready' && this.currentQuiz && !this.answerSubmitted && this.userAnswer.trim()) {
+        this.submitAnswer();
+        this.enterActionState = 'submitted'; // Mark that we've just submitted
+      }
+      // If we're ready to go to the next question
+      else if (this.enterActionState === 'submitted' && this.currentQuiz && this.answerSubmitted) {
+        if (this.isLastQuestion) {
+          this.completeQuiz();
+        } else {
+          this.nextQuestion();
+        }
+        this.enterActionState = 'ready'; // Reset to ready for the next question
+      }
+    }
+  }
+
+  // Track Enter key up
+  @HostListener('window:keyup.enter', ['$event'])
+  handleEnterKeyUp(event: KeyboardEvent) {
+    this.enterKeyState = 'up';
   }
 } 
