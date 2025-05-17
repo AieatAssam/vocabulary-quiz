@@ -1,0 +1,10 @@
+<div class="camera-capture">
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <div class="video-container">
+    <video #video autoplay playsinline></video>
+    <img *ngIf="previewUrl" [src]="previewUrl" alt="Captured preview" class="preview-overlay" />
+  </div>
+  <button mat-raised-button color="primary" (click)="capture()" [disabled]="!!previewUrl || !!error">Capture</button>
+  <button *ngIf="previewUrl" mat-button color="warn" (click)="clear()">Clear</button>
+  <canvas #canvas style="display:none"></canvas>
+</div>

@@ -1,1 +1,7 @@
-<p>home works!</p>
+<h2>Test Image Acquisition</h2>
+<app-image-upload (imageSelected)="onImage($event)"></app-image-upload>
+<app-camera-capture (imageCaptured)="onImage($event)"></app-camera-capture>
+<div *ngIf="imageUrl">
+  <h3>Result Preview:</h3>
+  <img [src]="imageUrl" style="max-width:300px;max-height:300px;border-radius:1rem;">
+</div>

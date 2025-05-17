@@ -48,4 +48,8 @@ export class ImageUploadComponent {
     this.previewUrl = null;
     this.error = null;
   }
+
+  triggerFileInput(input: HTMLInputElement) {
+    input.click();
+  }
 }

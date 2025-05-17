@@ -1,12 +1,13 @@
 <div class="image-upload">
   <input
+    #fileInput
     type="file"
     accept="image/jpeg,image/png"
     (change)="onFileChange($event)"
     id="fileInput"
     hidden
   />
-  <button mat-raised-button color="primary" (click)="document.getElementById('fileInput')?.click()">
+  <button mat-raised-button color="primary" (click)="triggerFileInput(fileInput)">
     <mat-icon>upload</mat-icon>
     Upload Image
   </button>
