@@ -35,7 +35,23 @@ Format as JSON object containing field "vocabulary" as an array of entries with 
 - "definitions" (array of definitions)
 
 When multiple definitions are supplied (synonyms or other words for the same meaning), include all of them as separate entries even if they are written together in the image.
-Only extract these from the image, do not supplement with any additional information!`
+e.g. "cake, pastry, dessert" should be split into three entries: "cake", "pastry", "dessert". "spring -> brook or jump into action" should be split into two entries: "brook" and "jump into action".
+Only extract these from the image, do not supplement with any additional information! If it is not in the image, do not include it in the response!
+
+Exammple:
+| word | definition |
+|------|------------|
+| cake | pastry, dessert |
+| spring | brook OR jump into action |
+
+should be converted to:
+{
+  "vocabulary": [
+    { "word": "cake", "definitions": ["pastry", "dessert"] },
+    { "word": "spring", "definitions": ["brook", "jump into action"] }
+  ]
+}
+`
           },
           {
             role: 'user',
@@ -46,6 +62,7 @@ Only extract these from the image, do not supplement with any additional informa
           }
         ],
         max_tokens: 8000,
+        temperature: 0.0,
         response_format: { type: 'json_object' }
       });
       return JSON.parse(response.choices[0]?.message?.content || '{}') as VocabularyOpenAIResponse;
