@@ -1,0 +1,23 @@
+<form [formGroup]="form" (ngSubmit)="save()" class="api-settings-form">
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>OpenAI API Key</mat-label>
+    <input matInput formControlName="apiKey" required autocomplete="off" />
+    <mat-error *ngIf="form.get('apiKey')?.hasError('required')">
+      API key is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>API Endpoint (optional)</mat-label>
+    <input matInput formControlName="endpoint" autocomplete="off" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Model (optional)</mat-label>
+    <input matInput formControlName="model" autocomplete="off" />
+  </mat-form-field>
+
+  <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
+    Save Settings
+  </button>
+</form>
