@@ -55,9 +55,8 @@ export class HeaderComponent implements OnInit {
 
   onDoQuizStep(): void {
     if (this.imageLoaded) {
-      // Navigate to quiz component (to be implemented)
-      console.log('Navigate to quiz component');
-      // For now, just mark as started
+      // Navigate to quiz component
+      this.router.navigate(['/quiz']);
       this.quizStarted = true;
     }
   }

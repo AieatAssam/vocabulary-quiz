@@ -17,7 +17,7 @@
 3. **Vocabulary Processing**
    - Extract words and definitions from image
    - Validate two-column format
-   - Store in memory for quiz generation
+   - Store in localStorage for quiz generation
    - Support for multiple languages
 
 4. **Quiz Generation**
@@ -48,7 +48,7 @@
 - Angular 17+ frontend
 - Responsive design
 - No backend required
-- No persistent storage
+- Local storage for vocabulary persistence
 - Client-side image processing
 - Secure API key handling
 
@@ -80,11 +80,13 @@
 - [x] Add vocabulary visualisation
 - [x] Create vocabulary storage service
 - [x] Implement error handling
+- [x] Store vocabulary in localStorage for persistence
 
 ### 5. Quiz Configuration Module
-- [ ] Create quiz settings component
-- [ ] Add question count configuration
-- [ ] Create quiz generation service
+- [x] Create quiz settings component
+- [x] Add question count configuration
+- [x] Create quiz generation service
+- [x] Implement randomization and quiz type options
 - [ ] Implement semantic matching logic
 
 ### 6. Quiz Interface Module
@@ -118,7 +120,7 @@
 ### 10. Final Steps
 - [ ] Optimize performance
 - [ ] Add error boundaries
-- [ ] Implement offline support
+- [x] Implement offline support (via localStorage)
 - [ ] Add analytics (optional)
 - [ ] Create deployment configuration
 
@@ -173,22 +175,36 @@
 - [x] Add vocabulary visualisation
 - [x] Create vocabulary storage service
 - [x] Implement error handling
+- [x] Store vocabulary in localStorage for persistence
+- [x] Create quiz settings component
+- [x] Add question count configuration
+- [x] Create quiz generation service
+- [x] Implement randomization and quiz type options
 
 ## In Progress Tasks
 
+- [ ] Create quiz display component
+- [ ] Implement question navigation
+- [ ] Add answer input components
+- [ ] Create progress tracking
+- [ ] Implement real-time validation
+
 ## Implementation Plan
 
-### Vocabulary Visualisation Component
+### Quiz Interface Component
 
-- Create a new Angular component (e.g., `vocabulary-visualisation.component.ts`).
-- Display the extracted vocabulary in a modern, responsive table.
-- Highlight rows with validation errors (e.g., missing word/definition, wrong format).
-- Show a summary of validation results (number of valid/invalid rows, error messages).
-- Use Angular Material for a polished look (mat-table, mat-card, etc.).
-- Allow user to review and confirm the vocabulary before quiz generation.
-- Integrate with `VocabularyStorageService` for data and validation.
+- Create a new Angular component (e.g., `quiz-interface.component.ts`).
+- Display questions one at a time with clear prompts.
+- Include input fields for user answers with validation.
+- Show immediate feedback (correct/incorrect).
+- Add navigation controls (previous/next questions).
+- Display progress indicator (e.g., 3/10 questions completed).
+- Implement timer functionality (if specified in settings).
+- Add ability to mark questions for review.
 
 ### Relevant Files
 
 - src/app/vocabulary-visualisation.component.ts - Displays and validates vocabulary visually
-- src/app/vocabulary-storage.service.ts - Stores and validates vocabulary data 
+- src/app/vocabulary-storage.service.ts - Stores and validates vocabulary data in localStorage
+- src/app/quiz-settings.component.ts - Configures quiz settings (type, count, randomization)
+- src/app/quiz.service.ts - Generates and manages quizzes from vocabulary data 

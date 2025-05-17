@@ -11,6 +11,7 @@ import { CameraCaptureComponent } from './camera-capture.component';
 import { VocabularyVisualisationComponent } from './vocabulary-visualisation.component';
 import { OpenAiService } from './openai.service';
 import { VocabularyOpenAIResponse } from './ivocabulary-openai-response-interface';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -32,6 +33,13 @@ import { VocabularyOpenAIResponse } from './ivocabulary-openai-response-interfac
         <h1 class="section-title">Your Vocabulary List</h1>
         <p class="section-description">Review your vocabulary list extracted from the image.</p>
         <app-vocabulary-visualisation></app-vocabulary-visualisation>
+        
+        <!-- Start Quiz Button -->
+        <div class="action-center">
+          <button mat-raised-button color="primary" (click)="startQuiz()">
+            <mat-icon>quiz</mat-icon> Start Quiz
+          </button>
+        </div>
       </ng-container>
       
       <!-- Instructions based on current state -->
@@ -236,6 +244,16 @@ import { VocabularyOpenAIResponse } from './ivocabulary-openai-response-interfac
       background: #e0e0e0;
       margin: 0 10px;
     }
+    .action-center {
+      display: flex;
+      justify-content: center;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+    }
+    .action-center button {
+      padding: 0.75rem 1.5rem;
+      font-size: 1.1rem;
+    }
   `]
 })
 export class HomeComponent implements OnInit {
@@ -246,7 +264,8 @@ export class HomeComponent implements OnInit {
   constructor(
     private vocabStorage: VocabularyStorageService,
     private config: ConfigurationService,
-    private openai: OpenAiService
+    private openai: OpenAiService,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -329,5 +348,9 @@ export class HomeComponent implements OnInit {
         console.error('Error extracting vocabulary:', e);
       }
     }
+  }
+
+  startQuiz() {
+    this.router.navigate(['/quiz']);
   }
 }
