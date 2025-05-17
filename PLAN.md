@@ -59,7 +59,7 @@
 - [x] Set up routing
 - [x] Configure environment files
 - [x] Set up basic styling (Angular Material or similar)
-- [ ] Create basic layout components
+- [x] Create basic layout components
 
 ### 2. Configuration Module
 - [ ] Create configuration service
