@@ -13,8 +13,9 @@ export class PdfExportService {
   /**
    * Generates and downloads a PDF with certificate and detailed quiz results
    * @param quiz Completed quiz with results
+   * @param name Optional name to display on the certificate
    */
-  async exportQuizResults(quiz: Quiz): Promise<void> {
+  async exportQuizResults(quiz: Quiz, name?: string): Promise<void> {
     // Create PDF document with A4 size
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -23,7 +24,7 @@ export class PdfExportService {
     });
     
     // Create certificate page
-    this.addCertificatePage(pdf, quiz);
+    this.addCertificatePage(pdf, quiz, name);
     
     // Add page break
     pdf.addPage();
@@ -39,7 +40,7 @@ export class PdfExportService {
   /**
    * Adds a certificate-style page to the PDF
    */
-  private addCertificatePage(pdf: jsPDF, quiz: Quiz): void {
+  private addCertificatePage(pdf: jsPDF, quiz: Quiz, name?: string): void {
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 20;
@@ -65,12 +66,12 @@ export class PdfExportService {
     const subTextWidth = pdf.getStringUnitWidth(subText) * 16 / pdf.internal.scaleFactor;
     pdf.text(subText, (pageWidth - subTextWidth) / 2, 70);
     
-    // Add placeholder for name (could be filled with user input in future)
+    // Add name (user-provided or default)
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(20);
-    const name = 'Student';
-    const nameWidth = pdf.getStringUnitWidth(name) * 20 / pdf.internal.scaleFactor;
-    pdf.text(name, (pageWidth - nameWidth) / 2, 85);
+    const displayName = name && name.trim() ? name.trim() : 'Student';
+    const nameWidth = pdf.getStringUnitWidth(displayName) * 20 / pdf.internal.scaleFactor;
+    pdf.text(displayName, (pageWidth - nameWidth) / 2, 85);
     
     // Add completion text
     pdf.setFont('helvetica', 'normal');

@@ -8,11 +8,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { QuizService } from './quiz.service';
 import { QuizSettingsComponent, QuizSettings } from './quiz-settings.component';
 import { VocabularyStorageService } from './vocabulary-storage.service';
 import { Quiz, QuizQuestion } from './quiz.service';
 import { PdfExportService } from './pdf-export.service';
+import { NameDialogComponent, NameDialogData } from './name-dialog.component';
 
 @Component({
   selector: 'app-quiz-interface',
@@ -25,6 +27,7 @@ import { PdfExportService } from './pdf-export.service';
     MatButtonModule,
     MatIconModule,
     MatProgressBarModule,
+    MatDialogModule,
     FormsModule,
     ReactiveFormsModule,
     QuizSettingsComponent
@@ -369,6 +372,7 @@ export class QuizInterfaceComponent implements OnInit {
     private quizService: QuizService,
     private vocabStorage: VocabularyStorageService,
     private pdfExportService: PdfExportService,
+    private dialog: MatDialog,
     private router: Router
   ) {}
 
@@ -562,11 +566,22 @@ export class QuizInterfaceComponent implements OnInit {
       return;
     }
     
-    try {
-      await this.pdfExportService.exportQuizResults(this.currentQuiz);
-    } catch (error) {
-      console.error('Failed to export PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
-    }
+    // Open dialog to get user's name
+    const dialogRef = this.dialog.open(NameDialogComponent, {
+      width: '350px',
+      data: { name: '' } as NameDialogData
+    });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result) {
+        try {
+          // Pass the name to the PDF export service
+          await this.pdfExportService.exportQuizResults(this.currentQuiz!, result);
+        } catch (error) {
+          console.error('Failed to export PDF:', error);
+          alert('Failed to generate PDF. Please try again.');
+        }
+      }
+    });
   }
 } 
