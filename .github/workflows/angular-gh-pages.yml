@@ -40,7 +40,7 @@ jobs:
       - name: Build
         run: |
           REPO_NAME=$(basename $GITHUB_REPOSITORY)
-          cd vocab-quiz && npm run build --base-href "/$REPO_NAME/"
+          cd vocab-quiz && ng build --base-href "/$REPO_NAME/" --configuration production
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
