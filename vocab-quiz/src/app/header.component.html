@@ -19,4 +19,13 @@
       <mat-icon *ngIf="!quizStarted">quiz</mat-icon>
     </div>
   </nav>
+  
+  <div class="action-buttons">
+    <button mat-icon-button color="primary" [disabled]="!hasStoredVocabulary" (click)="reloadVocabulary()" matTooltip="Reload vocabulary">
+      <mat-icon>refresh</mat-icon>
+    </button>
+    <button mat-icon-button color="warn" [disabled]="!hasStoredVocabulary" (click)="clearVocabulary()" matTooltip="Clear vocabulary">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
 </header>

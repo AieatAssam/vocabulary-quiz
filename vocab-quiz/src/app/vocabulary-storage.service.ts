@@ -21,7 +21,7 @@ export class VocabularyStorageService {
   /**
    * Load vocabulary from localStorage if it exists
    */
-  private loadFromStorage(): void {
+  loadFromStorage(): void {
     try {
       const storedVocab = localStorage.getItem(VOCABULARY_STORAGE_KEY);
       if (storedVocab) {

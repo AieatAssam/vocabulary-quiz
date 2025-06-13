@@ -50,23 +50,23 @@
 }
 
 .wizard-step.clickable:hover {
-  background: #e3f2fd;
-  color: #1976d2;
-  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
-}
-
-.wizard-step .mat-icon {
-  vertical-align: middle;
+  background: #eaeaea;
 }
 
 .wizard-step.disabled {
-  opacity: 0.5;
-  pointer-events: none;
+  opacity: 0.6;
+  cursor: default;
+  background: transparent;
 }
 
 .wizard-divider {
-  width: 32px;
-  height: 2px;
-  background: #e0e0e0;
-  border-radius: 1px;
+  width: 20px;
+  height: 1px;
+  background: #ddd;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: 1rem;
 }
