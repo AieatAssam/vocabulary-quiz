@@ -84,7 +84,11 @@ import { DialogComponent } from './dialog.component';
                 [(ngModel)]="userAnswer" 
                 [disabled]="answerSubmitted"
                 (keyup.enter)="submitAnswer()"
-                placeholder="Type your answer here">
+                placeholder="Type your answer here"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false">
             </mat-form-field>
 
             <!-- Feedback when answer is submitted -->
