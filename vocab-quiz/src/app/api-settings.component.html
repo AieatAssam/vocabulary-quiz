@@ -24,7 +24,12 @@
     <input matInput formControlName="customModel" autocomplete="off" />
   </mat-form-field>
 
-  <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || (isCustomModel && !form.value.customModel)">
-    Save Settings
-  </button>
+  <div class="button-row">
+    <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || (isCustomModel && !form.value.customModel)">
+      Save Settings
+    </button>
+    <button mat-button type="button" color="warn" (click)="clearSettings()">
+      Clear Settings
+    </button>
+  </div>
 </form>

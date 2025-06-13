@@ -15,9 +15,15 @@
   width: 100%;
 }
 
-button[type="submit"] {
-  align-self: flex-end;
-  min-width: 140px;
+.button-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 0.5rem;
+  
+  button[type="submit"] {
+    min-width: 140px;
+  }
 }
 
 .error {

@@ -71,4 +71,14 @@ export class ApiSettingsComponent {
       }
     }
   }
+
+  clearSettings(): void {
+    this.config.clearSettings();
+    this.form.patchValue({
+      apiKey: '',
+      endpoint: '',
+      model: 'gpt-4o-mini',
+      customModel: ''
+    });
+  }
 }
