@@ -9,9 +9,12 @@ export interface QuizQuestion {
   prompt: string;
   answer: string;
   allAnswers?: string[]; // All possible correct answers (for definition questions)
+  matchedAnswers?: string[]; // Answers that the user has correctly matched (for definition mode)
   options?: string[]; // For multiple choice (future feature)
   userAnswer?: string;
+  userAnswers?: string[]; // For tracking multiple answers in definition mode
   isCorrect?: boolean;
+  completeness?: number; // Percentage of required answers provided (for definition mode)
 }
 
 export interface Quiz {
@@ -76,10 +79,30 @@ export class QuizService {
     }
 
     const currentQuestion = this.currentQuiz.questions[this.currentQuiz.currentQuestionIndex];
-    currentQuestion.userAnswer = answer;
     
-    // Check if the answer is correct (implement a more sophisticated matching later)
-    currentQuestion.isCorrect = this.checkAnswer(currentQuestion, answer);
+    if (currentQuestion.type === 'definition' && 
+        currentQuestion.allAnswers && 
+        currentQuestion.allAnswers.length > 0) {
+      
+      // Initialize arrays if first submission
+      if (!currentQuestion.userAnswers) {
+        currentQuestion.userAnswers = [];
+      }
+      if (!currentQuestion.matchedAnswers) {
+        currentQuestion.matchedAnswers = [];
+      }
+      
+      // Store user's answer for definition mode with multiple answers
+      currentQuestion.userAnswers.push(answer);
+      currentQuestion.userAnswer = answer; // Keep for backward compatibility
+      
+      // Check this specific answer
+      this.checkAnswer(currentQuestion, answer);
+    } else {
+      // Traditional single-answer mode
+      currentQuestion.userAnswer = answer;
+      currentQuestion.isCorrect = this.checkAnswer(currentQuestion, answer);
+    }
   }
 
   /**
@@ -208,10 +231,38 @@ export class QuizService {
     
     // For definition questions with multiple valid answers
     if (question.type === 'definition' && question.allAnswers && question.allAnswers.length > 0) {
+      // Initialize matchedAnswers if it doesn't exist
+      if (!question.matchedAnswers) {
+        question.matchedAnswers = [];
+      }
+      
       // Check if the user's answer matches any of the valid definitions
-      return question.allAnswers.some(answer => 
+      const matchedDefinition = question.allAnswers.find(answer => 
         this.normalizeText(answer) === normalizedUserAnswer
       );
+      
+      if (matchedDefinition) {
+        // If this is a new match (not already in matchedAnswers)
+        if (!question.matchedAnswers.includes(matchedDefinition)) {
+          question.matchedAnswers.push(matchedDefinition);
+        }
+        
+        // Calculate completeness percentage
+        question.completeness = Math.round((question.matchedAnswers.length / question.allAnswers.length) * 100);
+        
+        // Mark as correct if at least one definition is matched
+        question.isCorrect = question.matchedAnswers.length > 0;
+        
+        return true;
+      }
+      
+      // Still mark as correct if they have at least one correct answer already
+      question.isCorrect = question.matchedAnswers.length > 0;
+      
+      // Update completeness percentage
+      question.completeness = Math.round((question.matchedAnswers.length / question.allAnswers.length) * 100);
+      
+      return false;
     } 
     
     // For word questions or if there are no multiple definitions
@@ -222,4 +273,4 @@ export class QuizService {
   private generateQuizId(): string {
     return `quiz_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
   }
-} 
+}

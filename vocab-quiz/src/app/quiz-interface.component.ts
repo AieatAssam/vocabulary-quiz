@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -29,6 +30,7 @@ import { DialogComponent } from './dialog.component';
     MatIconModule,
     MatProgressBarModule,
     MatDialogModule,
+    MatChipsModule,
     FormsModule,
     ReactiveFormsModule,
     QuizSettingsComponent
@@ -91,19 +93,42 @@ import { DialogComponent } from './dialog.component';
                 spellcheck="false">
             </mat-form-field>
 
+            <!-- Definition Mode - Show matched answers as chips when defining a word -->
+            <div *ngIf="currentQuestion?.type === 'definition' && isDefinitionMultiAnswerMode()" class="matched-answers-container">
+              <p class="matched-answers-title">Your matched definitions ({{ getCompletenessText() }}):</p>
+              <div class="chip-container">
+                <mat-chip-listbox>
+                  <mat-chip 
+                    *ngFor="let answer of getMatchedAnswers()" 
+                    color="primary" 
+                    selected>
+                    <mat-icon matChipAvatar>check</mat-icon>
+                    {{ answer }}
+                  </mat-chip>
+                </mat-chip-listbox>
+              </div>
+              <mat-progress-bar 
+                *ngIf="currentQuestion?.completeness !== undefined"
+                class="completeness-bar" 
+                color="accent" 
+                [value]="currentQuestion?.completeness || 0">
+              </mat-progress-bar>
+            </div>
+            
             <!-- Feedback when answer is submitted -->
-            <div *ngIf="answerSubmitted" class="feedback-container"
+            <div *ngIf="answerSubmitted && (!isDefinitionMultiAnswerMode() || !currentQuestion?.isCorrect)" class="feedback-container"
                 [class.correct]="currentQuestion?.isCorrect"
                 [class.incorrect]="currentQuestion?.isCorrect === false">
               <mat-icon>{{ currentQuestion?.isCorrect ? 'check_circle' : 'cancel' }}</mat-icon>
               <div class="feedback-text">
                 <p>{{ currentQuestion?.isCorrect ? 'Correct!' : 'Incorrect!' }}</p>
-                <p *ngIf="!currentQuestion?.isCorrect" class="correct-answer">
+                <!-- For word-to-definition mode (single answer) or incorrect definition questions -->
+                <p *ngIf="!currentQuestion?.isCorrect && (!isDefinitionMultiAnswerMode() || currentQuestion?.type === 'word')" class="correct-answer">
                   Correct answer: {{ currentQuestion?.answer }}
                 </p>
-                <!-- Show multiple answers only for definition questions with multiple answers -->
+                <!-- Show multiple answers for definition questions with multiple answers - used for incorrect answers -->
                 <ng-container *ngIf="!currentQuestion?.isCorrect && currentQuestion?.type === 'definition'">
-                  <div *ngIf="hasMultipleAnswers()" class="all-answers">
+                  <div *ngIf="hasMultipleAnswers() && !isDefinitionMultiAnswerMode()" class="all-answers">
                     <p class="all-answers-title">All accepted answers:</p>
                     <ul>
                       <li *ngFor="let answer of getAllAnswers()">{{ answer }}</li>
@@ -123,27 +148,56 @@ import { DialogComponent } from './dialog.component';
               <mat-icon>close</mat-icon> Quit Quiz
             </button>
             <span class="spacer"></span>
-            <button 
-              mat-raised-button 
-              color="primary" 
-              *ngIf="!answerSubmitted"
-              (click)="submitAnswer()">
-              <mat-icon>send</mat-icon> Submit (Enter)
-            </button>
-            <button 
-              mat-raised-button 
-              color="primary" 
-              *ngIf="answerSubmitted && !isLastQuestion"
-              (click)="nextQuestion()">
-              <mat-icon>arrow_forward</mat-icon> Next (Enter)
-            </button>
-            <button 
-              mat-raised-button 
-              color="accent" 
-              *ngIf="answerSubmitted && isLastQuestion"
-              (click)="completeQuiz()">
-              <mat-icon>done_all</mat-icon> Finish Quiz (Enter)
-            </button>
+            
+            <!-- Definition Mode with Multiple Answers -->
+            <ng-container *ngIf="isDefinitionMultiAnswerMode()">
+              <button 
+                mat-raised-button 
+                color="primary" 
+                *ngIf="hasUserAnswer()"
+                (click)="submitAnswer()">
+                <mat-icon>add</mat-icon> Add Definition (Enter)
+              </button>
+              <button 
+                mat-raised-button 
+                color="accent" 
+                *ngIf="!isLastQuestion"
+                (click)="nextQuestion()">
+                <mat-icon>arrow_forward</mat-icon> Next Question
+              </button>
+              <button 
+                mat-raised-button 
+                color="accent" 
+                *ngIf="isLastQuestion"
+                (click)="completeQuiz()">
+                <mat-icon>done_all</mat-icon> Finish Quiz
+              </button>
+            </ng-container>
+            
+            <!-- Word-to-Definition Mode (Standard) -->
+            <ng-container *ngIf="!isDefinitionMultiAnswerMode()">
+              <button 
+                mat-raised-button 
+                color="primary" 
+                *ngIf="!answerSubmitted"
+                (click)="submitAnswer()">
+                <mat-icon>send</mat-icon> Submit (Enter)
+              </button>
+              <button 
+                mat-raised-button 
+                color="primary" 
+                *ngIf="answerSubmitted && !isLastQuestion"
+                (click)="nextQuestion()">
+                <mat-icon>arrow_forward</mat-icon> Next (Enter)
+              </button>
+              <button 
+                mat-raised-button 
+                color="accent" 
+                *ngIf="answerSubmitted && isLastQuestion"
+                (click)="completeQuiz()">
+                <mat-icon>done_all</mat-icon> Finish Quiz (Enter)
+              </button>
+            </ng-container>
           </div>
         </mat-card>
       </div>
@@ -325,6 +379,31 @@ import { DialogComponent } from './dialog.component';
       margin-bottom: 0.25rem;
       color: #555;
     }
+    
+    .matched-answers-container {
+      margin: 1rem 0;
+      padding: 0.75rem;
+      background-color: rgba(63, 81, 181, 0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(63, 81, 181, 0.1);
+    }
+    
+    .matched-answers-title {
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #555;
+    }
+    
+    .chip-container {
+      margin-bottom: 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .completeness-bar {
+      margin-top: 0.5rem;
+    }
 
     .action-buttons {
       display: flex;
@@ -417,28 +496,56 @@ export class QuizInterfaceComponent implements OnInit {
   }
 
   submitAnswer() {
-    if (!this.currentQuiz || this.answerSubmitted || !this.userAnswer.trim()) return;
-
-    this.quizService.submitAnswer(this.userAnswer.trim());
-    this.answerSubmitted = true;
-    this.enterActionState = 'submitted';
+    // Don't proceed if no quiz or empty answer
+    if (!this.currentQuiz || !this.userAnswer.trim()) return;
+    
+    // In definition multi-answer mode, we don't set answerSubmitted to true
+    // We just add the answer and clear the input field for the next definition
+    if (this.isDefinitionMultiAnswerMode()) {
+      this.quizService.submitAnswer(this.userAnswer.trim());
+      this.userAnswer = ''; // Clear for next definition input
+      this.enterActionState = 'ready';
+    } else {
+      // Standard behavior for word questions
+      this.quizService.submitAnswer(this.userAnswer.trim());
+      this.answerSubmitted = true;
+      this.enterActionState = 'submitted';
+    }
   }
 
   nextQuestion() {
-    if (!this.currentQuiz || !this.answerSubmitted) return;
-
-    if (this.quizService.nextQuestion()) {
-      this.answerSubmitted = false;
-      this.userAnswer = '';
-      this.enterActionState = 'ready';
+    // For definition multi-answer mode, we can always move to next question
+    if (this.isDefinitionMultiAnswerMode()) {
+      if (this.quizService.nextQuestion()) {
+        this.userAnswer = '';
+        this.enterActionState = 'ready';
+      }
+    } else if (!this.currentQuiz || !this.answerSubmitted) {
+      return;
+    } else {
+      // Standard behavior for word questions
+      if (this.quizService.nextQuestion()) {
+        this.answerSubmitted = false;
+        this.userAnswer = '';
+        this.enterActionState = 'ready';
+      }
     }
   }
 
   completeQuiz() {
-    if (!this.currentQuiz || !this.answerSubmitted) return;
-
-    this.quizService.completeQuiz();
-    this.enterActionState = 'ready';
+    // For definition multi-answer mode, we can complete the quiz at any time
+    if (this.isDefinitionMultiAnswerMode()) {
+      if (!this.currentQuiz) return;
+      this.quizService.completeQuiz();
+      this.enterActionState = 'ready';
+    } 
+    // For standard mode, require answer submission first
+    else if (!this.currentQuiz || !this.answerSubmitted) {
+      return;
+    } else {
+      this.quizService.completeQuiz();
+      this.enterActionState = 'ready';
+    }
   }
 
   startNewQuiz() {
@@ -493,19 +600,38 @@ export class QuizInterfaceComponent implements OnInit {
       // Prevent default to avoid form submissions or button clicks
       event.preventDefault();
 
-      // If we're ready to submit an answer
-      if (this.enterActionState === 'ready' && this.currentQuiz && !this.answerSubmitted && this.userAnswer.trim()) {
-        this.submitAnswer();
-        this.enterActionState = 'submitted'; // Mark that we've just submitted
-      }
-      // If we're ready to go to the next question
-      else if (this.enterActionState === 'submitted' && this.currentQuiz && this.answerSubmitted) {
-        if (this.isLastQuestion) {
-          this.completeQuiz();
+      // For definition multi-answer mode
+      if (this.currentQuiz && this.isDefinitionMultiAnswerMode()) {
+        if (this.userAnswer?.trim()) {
+          // Submit the current definition
+          this.submitAnswer();
+          this.enterActionState = 'ready';
         } else {
-          this.nextQuestion();
+          // Move to the next question if input is empty
+          if (this.isLastQuestion) {
+            this.completeQuiz();
+          } else {
+            this.nextQuestion();
+          }
+          this.enterActionState = 'ready';
         }
-        this.enterActionState = 'ready'; // Reset to ready for the next question
+      }
+      // Standard behavior for word questions
+      else if (this.currentQuiz) {
+        // If we're ready to submit an answer
+        if (this.enterActionState === 'ready' && !this.answerSubmitted && this.userAnswer?.trim()) {
+          this.submitAnswer();
+          this.enterActionState = 'submitted'; // Mark that we've just submitted
+        }
+        // If we're ready to go to the next question
+        else if (this.enterActionState === 'submitted' && this.answerSubmitted) {
+          if (this.isLastQuestion) {
+            this.completeQuiz();
+          } else {
+            this.nextQuestion();
+          }
+          this.enterActionState = 'ready'; // Reset to ready for the next question
+        }
       }
     }
   }
@@ -529,6 +655,39 @@ export class QuizInterfaceComponent implements OnInit {
    */
   getAllAnswers(): string[] {
     return this.currentQuestion?.allAnswers || [];
+  }
+  
+  /**
+   * Checks if we're in definition multi-answer mode
+   */
+  isDefinitionMultiAnswerMode(): boolean {
+    return this.currentQuestion?.type === 'definition' && 
+           this.hasMultipleAnswers() && 
+           this.currentQuiz?.settings.quizType !== 'word';
+  }
+  
+  /**
+   * Gets matched answers for the current definition question
+   */
+  getMatchedAnswers(): string[] {
+    return this.currentQuestion?.matchedAnswers || [];
+  }
+  
+  /**
+   * Checks if there's text in the user answer field
+   */
+  hasUserAnswer(): boolean {
+    return !!this.userAnswer?.trim();
+  }
+  
+  /**
+   * Gets a text representation of the completeness
+   */
+  getCompletenessText(): string {
+    const matchedCount = this.currentQuestion?.matchedAnswers?.length || 0;
+    const totalCount = this.currentQuestion?.allAnswers?.length || 0;
+    
+    return `${matchedCount}/${totalCount} complete`;
   }
   
   /**
@@ -599,4 +758,4 @@ export class QuizInterfaceComponent implements OnInit {
       }
     });
   }
-} 
+}
