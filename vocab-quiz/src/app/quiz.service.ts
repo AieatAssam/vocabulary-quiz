@@ -15,6 +15,7 @@ export interface QuizQuestion {
   userAnswers?: string[]; // For tracking multiple answers in definition mode
   isCorrect?: boolean;
   completeness?: number; // Percentage of required answers provided (for definition mode)
+  wordId?: string; // The word this question is testing (for better distribution)
 }
 
 export interface Quiz {
@@ -157,7 +158,8 @@ export class QuizService {
           type: 'definition',
           prompt: entry.word,
           answer: entry.definitions[0], // Using first definition as the primary answer
-          allAnswers: [...entry.definitions] // Store all definitions as valid answers
+          allAnswers: [...entry.definitions], // Store all definitions as valid answers
+          wordId: entry.word // Track which word this question is for
         });
       }
 
@@ -168,18 +170,42 @@ export class QuizService {
             id: questionPool.length,
             type: 'word',
             prompt: definition,
-            answer: entry.word
+            answer: entry.word,
+            wordId: entry.word // Track which word this question is for
           });
         });
       }
     });
 
-    // Select the required number of questions
-    let selectedQuestions = questionPool;
+    // Select the required number of questions with better distribution
+    let selectedQuestions: QuizQuestion[] = [];
     
-    // Limit to the requested number
+    // If we need to limit the number of questions
     if (settings.questionCount < questionPool.length) {
-      selectedQuestions = this.selectRandomQuestions(questionPool, settings.questionCount);
+      if (settings.quizType === 'mixed') {
+        // For mixed quizzes, ensure an even distribution of both question types
+        const wordQuestions = questionPool.filter(q => q.type === 'word');
+        const defQuestions = questionPool.filter(q => q.type === 'definition');
+        
+        // Determine how many of each type to include
+        const wordCount = Math.floor(settings.questionCount / 2);
+        const defCount = settings.questionCount - wordCount;
+        
+        // Select distributed questions of each type
+        const selectedWordQuestions = this.selectDistributedQuestions(wordQuestions, wordCount);
+        const selectedDefQuestions = this.selectDistributedQuestions(defQuestions, defCount);
+        
+        // Combine both types
+        selectedQuestions = [...selectedWordQuestions, ...selectedDefQuestions];
+      }
+      else if (settings.quizType === 'word' || settings.quizType === 'definition') {
+        selectedQuestions = this.selectDistributedQuestions(questionPool, settings.questionCount);
+      } else {
+        // Fallback to random selection for any other quiz types
+        selectedQuestions = this.selectRandomQuestions(questionPool, settings.questionCount);
+      }
+    } else {
+      selectedQuestions = [...questionPool];
     }
 
     // Randomize the order if requested
@@ -187,6 +213,60 @@ export class QuizService {
       this.shuffleArray(selectedQuestions);
     }
 
+    return selectedQuestions;
+  }
+
+  /**
+   * Select questions ensuring a better distribution of unique words
+   * This prevents the same word from appearing too many times while others don't appear at all
+   */
+  private selectDistributedQuestions(questions: QuizQuestion[], count: number): QuizQuestion[] {
+    // Group questions by wordId (the word being tested)
+    const questionsByWord: { [wordId: string]: QuizQuestion[] } = {};
+    questions.forEach(q => {
+      const wordId = q.wordId || q.answer; // Use answer as fallback if wordId is undefined
+      if (!questionsByWord[wordId]) {
+        questionsByWord[wordId] = [];
+      }
+      questionsByWord[wordId].push(q);
+    });
+
+    const wordIds = Object.keys(questionsByWord);
+    const selectedQuestions: QuizQuestion[] = [];
+    
+    // First, ensure each word is represented at least once (if there's room)
+    const wordsToInclude = Math.min(wordIds.length, count);
+    
+    // Shuffle the words to randomize which ones are selected
+    this.shuffleArray(wordIds);
+    
+    // Pick one question from each word first
+    for (let i = 0; i < wordsToInclude; i++) {
+      const wordId = wordIds[i];
+      const wordQuestions = questionsByWord[wordId];
+      
+      // Randomly select one question for this word
+      const randomIndex = Math.floor(Math.random() * wordQuestions.length);
+      selectedQuestions.push(wordQuestions.splice(randomIndex, 1)[0]);
+    }
+    
+    // If we still need more questions, go through words again in rotation
+    if (selectedQuestions.length < count) {
+      // Create a pool of all remaining questions
+      const remainingQuestions: QuizQuestion[] = [];
+      wordIds.forEach(wordId => {
+        remainingQuestions.push(...questionsByWord[wordId]);
+      });
+      
+      // Shuffle the remaining questions
+      this.shuffleArray(remainingQuestions);
+      
+      // Add remaining questions up to the count
+      while (selectedQuestions.length < count && remainingQuestions.length > 0) {
+        selectedQuestions.push(remainingQuestions.pop()!);
+      }
+    }
+    
     return selectedQuestions;
   }
 
