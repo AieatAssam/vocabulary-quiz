@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -85,7 +85,7 @@ import { DialogComponent } from './dialog.component';
                 matInput 
                 [(ngModel)]="userAnswer" 
                 [disabled]="answerSubmitted"
-                (keyup.enter)="submitAnswer()"
+                #answerInput
                 placeholder="Type your answer here"
                 autocomplete="off"
                 autocorrect="off"
@@ -116,7 +116,7 @@ import { DialogComponent } from './dialog.component';
             </div>
             
             <!-- Multi-definition unmatched answers - displayed directly in the UI -->
-            <div *ngIf="currentQuestion?.type === 'definition' && isDefinitionMultiAnswerMode() && showMultiAnswerSummary" class="unmatched-answers-container">
+            <div *ngIf="currentQuestion?.type === 'definition' && isDefinitionMultiAnswerMode() && movingToNextQuestion" class="unmatched-answers-container">
               <p class="unmatched-answers-title">Definitions you haven't matched yet:</p>
               <div class="unmatched-list">
                 <ul>
@@ -162,20 +162,6 @@ import { DialogComponent } from './dialog.component';
             <!-- Definition Mode with Multiple Answers -->
             <ng-container *ngIf="isDefinitionMultiAnswerMode()">
               <button 
-                mat-button 
-                color="primary" 
-                *ngIf="!showMultiAnswerSummary"
-                (click)="toggleMultiAnswerSummary()">
-                <mat-icon>visibility</mat-icon> Show All Definitions
-              </button>
-              <button 
-                mat-button 
-                color="primary" 
-                *ngIf="showMultiAnswerSummary"
-                (click)="toggleMultiAnswerSummary()">
-                <mat-icon>visibility_off</mat-icon> Hide Definitions
-              </button>
-              <button 
                 mat-raised-button 
                 color="primary" 
                 *ngIf="hasUserAnswer()"
@@ -185,16 +171,30 @@ import { DialogComponent } from './dialog.component';
               <button 
                 mat-raised-button 
                 color="accent" 
-                *ngIf="!isLastQuestion"
-                (click)="proceedToNextQuestion()">
+                *ngIf="!movingToNextQuestion && !isLastQuestion"
+                (click)="prepareToMoveNext()">
                 <mat-icon>arrow_forward</mat-icon> Next Question
               </button>
               <button 
                 mat-raised-button 
+                color="primary" 
+                *ngIf="movingToNextQuestion && !isLastQuestion"
+                (click)="proceedToNextQuestion()">
+                <mat-icon>check</mat-icon> Continue
+              </button>
+              <button 
+                mat-raised-button 
                 color="accent" 
-                *ngIf="isLastQuestion"
-                (click)="completeQuiz()">
+                *ngIf="!movingToNextQuestion && isLastQuestion"
+                (click)="prepareToFinish()">
                 <mat-icon>done_all</mat-icon> Finish Quiz
+              </button>
+              <button 
+                mat-raised-button 
+                color="primary" 
+                *ngIf="movingToNextQuestion && isLastQuestion"
+                (click)="completeQuiz()">
+                <mat-icon>check</mat-icon> Continue
               </button>
             </ng-container>
             
@@ -489,10 +489,11 @@ export class QuizInterfaceComponent implements OnInit {
   currentQuiz: Quiz | null = null;
   userAnswer: string = '';
   answerSubmitted: boolean = false;
-  enterKeyState: 'up' | 'down' = 'up';
   enterActionState: 'ready' | 'submitted' = 'ready';
-  showMultiAnswerSummary: boolean = false;
+  movingToNextQuestion: boolean = false;
   
+  @ViewChild('answerInput') answerInput!: ElementRef<HTMLInputElement>;
+
   get currentQuestion(): QuizQuestion | undefined {
     if (!this.currentQuiz) return undefined;
     return this.currentQuiz.questions[this.currentQuiz.currentQuestionIndex];
@@ -520,7 +521,7 @@ export class QuizInterfaceComponent implements OnInit {
     this.currentQuiz = this.quizService.generateQuiz(settings);
     this.userAnswer = '';
     this.answerSubmitted = false;
-    this.showMultiAnswerSummary = false;
+    this.movingToNextQuestion = false;
   }
 
   onCancelQuiz(): void {
@@ -565,7 +566,7 @@ export class QuizInterfaceComponent implements OnInit {
       this.answerSubmitted = false;
       this.userAnswer = '';
       this.enterActionState = 'ready';
-      this.showMultiAnswerSummary = false;
+      this.movingToNextQuestion = false;
     }
   }
   
@@ -580,7 +581,7 @@ export class QuizInterfaceComponent implements OnInit {
       this.userAnswer = '';
       this.answerSubmitted = false; 
       this.enterActionState = 'ready';
-      this.showMultiAnswerSummary = false;
+      this.movingToNextQuestion = false;
     }
   }
 
@@ -619,7 +620,7 @@ export class QuizInterfaceComponent implements OnInit {
     this.currentQuiz = null;
     this.userAnswer = '';
     this.answerSubmitted = false;
-    this.showMultiAnswerSummary = false;
+    this.movingToNextQuestion = false;
   }
 
   viewVocabulary() {
@@ -658,39 +659,61 @@ export class QuizInterfaceComponent implements OnInit {
   }
 
   // Track Enter key down
-  @HostListener('window:keydown.enter', ['$event'])
-  handleEnterKeyDown(event: KeyboardEvent) {
-    // Only process if the key was previously up
-    if (this.enterKeyState === 'up') {
-      this.enterKeyState = 'down';
-
-      // Submit answer in input field - only prevent default when handling text input submissions
-      if (this.currentQuiz && this.userAnswer?.trim()) {
-        // Prevent default only for input field submissions to avoid capturing elsewhere
-        if (document.activeElement?.tagName === 'INPUT') {
-          event.preventDefault();
-          this.submitAnswer();
-        }
-        return;
+  @HostListener('document:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent) {
+    // Only handle Enter key and if there's a current quiz
+    if (event.key !== 'Enter' || !this.currentQuiz) {
+      return;
+    }
+    
+    // Prevent default behavior for Enter key to stop form submission
+    event.preventDefault();
+    event.stopPropagation();
+    
+    console.log('Enter pressed - State:', { 
+      hasInput: !!this.userAnswer?.trim(),
+      answered: this.answerSubmitted,
+      isMultiMode: this.isDefinitionMultiAnswerMode(),
+      moving: this.movingToNextQuestion,
+      isLast: this.isLastQuestion
+    });
+    
+    // CASE 1: User has typed something - submit the answer
+    if (this.userAnswer?.trim()) {
+      this.submitAnswer();
+      return;
+    }
+    
+    // CASE 2: Standard mode with answered question - move to next
+    if (!this.isDefinitionMultiAnswerMode() && this.answerSubmitted) {
+      if (this.isLastQuestion) {
+        this.completeQuiz();
+      } else {
+        this.nextQuestion();
       }
-      
-      // For standard quiz mode, handle other enter key actions (next question, complete quiz)
-      if (this.currentQuiz && !this.isDefinitionMultiAnswerMode() && this.answerSubmitted) {
-        event.preventDefault();
-        if (this.isLastQuestion) {
-          this.completeQuiz();
+      return;
+    }
+    
+    // CASE 3: Multi-definition mode - handle two-step navigation
+    if (this.isDefinitionMultiAnswerMode()) {
+      // Empty input field is the signal to continue
+      if (!this.userAnswer?.trim()) {
+        if (!this.movingToNextQuestion) {
+          // First press - show definitions
+          this.prepareToMoveNext();
         } else {
-          this.nextQuestion();
+          // Second press - proceed to next question/finish
+          if (this.isLastQuestion) {
+            this.completeQuiz();
+          } else {
+            this.proceedToNextQuestion();
+          }
         }
       }
     }
   }
 
-  // Track Enter key up
-  @HostListener('window:keyup.enter', ['$event'])
-  handleEnterKeyUp(event: KeyboardEvent) {
-    this.enterKeyState = 'up';
-  }
+  // No longer need the Enter key up handler
 
   /**
    * Checks if the current question has multiple accepted answers
@@ -812,10 +835,17 @@ export class QuizInterfaceComponent implements OnInit {
   }
 
   /**
-   * Toggles the display of all answers in multi-definition mode
+   * Prepare to move to the next question by showing definitions
    */
-  toggleMultiAnswerSummary(): void {
-    this.showMultiAnswerSummary = !this.showMultiAnswerSummary;
+  prepareToMoveNext(): void {
+    this.movingToNextQuestion = true;
+  }
+  
+  /**
+   * Prepare to finish the quiz by showing definitions
+   */
+  prepareToFinish(): void {
+    this.movingToNextQuestion = true;
   }
 
   /**
