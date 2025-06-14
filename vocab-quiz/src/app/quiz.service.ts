@@ -97,8 +97,13 @@ export class QuizService {
       currentQuestion.userAnswers.push(answer);
       currentQuestion.userAnswer = answer; // Keep for backward compatibility
       
-      // Check this specific answer
-      this.checkAnswer(currentQuestion, answer);
+      // Check this specific answer and update matched answers
+      const wasCorrect = this.checkAnswer(currentQuestion, answer);
+      
+      // The question is considered correct if at least one definition has been matched
+      currentQuestion.isCorrect = currentQuestion.matchedAnswers && currentQuestion.matchedAnswers.length > 0;
+      
+      return;
     } else {
       // Traditional single-answer mode
       currentQuestion.userAnswer = answer;
@@ -315,17 +320,17 @@ export class QuizService {
   private textMatches(text1: string, text2: string): boolean {
     if (!text1 || !text2) return false;
     
-    // First try with our standard normalization
+    // Apply normalization to both texts
     const normalized1 = this.normalizeText(text1);
     const normalized2 = this.normalizeText(text2);
     
-    if (normalized1 === normalized2) return true;
+    // Skip comparison if either string is too short after normalization
+    if (normalized1.length < 2 || normalized2.length < 2) return false;
     
-    // Additional checks for case insensitivity
-    // Though already handled by normalizeText, this is an extra safeguard
-    if (normalized1.toLowerCase() === normalized2.toLowerCase()) return true;
+    console.log(`Comparing "${text1}" with "${text2}" (normalized: "${normalized1}" vs "${normalized2}")`);
     
-    return false;
+    // Check if normalized texts match exactly
+    return normalized1 === normalized2;
   }
   
   private checkAnswer(question: QuizQuestion, userAnswer: string): boolean {
@@ -336,14 +341,46 @@ export class QuizService {
         question.matchedAnswers = [];
       }
       
-      // Check if the user's answer matches any of the valid definitions
-      const matchedDefinition = question.allAnswers.find(answer => 
+      let foundMatch = false;
+      let matchedDefinition: string | undefined;
+      
+      // First, check for exact matches with any of the valid definitions
+      matchedDefinition = question.allAnswers.find(answer => 
         this.textMatches(answer, userAnswer)
       );
       
       if (matchedDefinition) {
+        foundMatch = true;
+      } else {
+        // If no exact match, split the user answer by spaces and check each word/phrase
+        const userPhrases = this.extractPhrases(userAnswer);
+        
+        // Sort phrases by length (longest first) to prioritize specific matches over general ones
+        const sortedPhrases = [...userPhrases].sort((a, b) => b.length - a.length);
+        
+        console.log(`User phrases extracted (sorted by length): ${sortedPhrases.join(', ')}`);
+        console.log(`Checking against definitions: ${question.allAnswers.join(', ')}`);
+        
+        for (const phrase of sortedPhrases) {
+          // Skip very short phrases that are unlikely to be meaningful
+          if (phrase.length < 2) continue;
+          
+          // Check if any of the user's phrases match a definition
+          matchedDefinition = question.allAnswers.find(answer => 
+            this.textMatches(answer, phrase)
+          );
+          
+          if (matchedDefinition) {
+            console.log(`Match found! "${phrase}" matches definition "${matchedDefinition}"`);
+            foundMatch = true;
+            break;
+          }
+        }
+      }
+      
+      if (foundMatch && matchedDefinition) {
         // If this is a new match (not already in matchedAnswers)
-        if (!question.matchedAnswers.some(matched => this.textMatches(matched, matchedDefinition))) {
+        if (!question.matchedAnswers.some(matched => this.textMatches(matched, matchedDefinition!))) {
           question.matchedAnswers.push(matchedDefinition);
         }
         
@@ -371,5 +408,43 @@ export class QuizService {
 
   private generateQuizId(): string {
     return `quiz_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  }
+
+  /**
+   * Extract potential phrases from a string
+   * This handles both individual words and multi-word phrases
+   * For example, "armada group of ships" would produce:
+   * ["armada group of ships", "armada", "group", "of", "ships", "group of", "of ships", "group of ships"]
+   */
+  private extractPhrases(input: string): string[] {
+    if (!input) return [];
+    
+    const normalizedInput = input.trim().toLowerCase();
+    if (!normalizedInput) return [];
+    
+    const words = normalizedInput.split(/\s+/);
+    if (words.length <= 1) return [normalizedInput]; // Single word, no need to generate phrases
+    
+    // Start with the full input as a phrase
+    const phrases: Set<string> = new Set([normalizedInput]);
+    
+    // Generate all possible contiguous word combinations
+    for (let startIdx = 0; startIdx < words.length; startIdx++) {
+      // Add individual word if long enough
+      if (words[startIdx].length > 1) {
+        phrases.add(words[startIdx]);
+      }
+      
+      // Add all possible phrases starting at this word
+      for (let endIdx = startIdx + 1; endIdx < words.length + 1; endIdx++) {
+        const phrase = words.slice(startIdx, endIdx).join(' ');
+        if (phrase !== normalizedInput) { // Don't add the full phrase twice
+          phrases.add(phrase);
+        }
+      }
+    }
+    
+    console.log(`Generated phrases for "${normalizedInput}": ${Array.from(phrases).join(', ')}`);
+    return Array.from(phrases);
   }
 }
