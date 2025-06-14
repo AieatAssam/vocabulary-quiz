@@ -93,6 +93,50 @@ export class VocabularyStorageService {
   }
 
   /**
+   * Add a new vocabulary word with its definitions
+   */
+  addVocabularyWord(word: string, definitions: string[]): void {
+    const currentVocab = this.getVocabulary();
+    
+    if (!currentVocab) {
+      // Create new vocabulary if none exists
+      const newVocab: VocabularyOpenAIResponse = {
+        vocabulary: [{ word, definitions }]
+      };
+      this.setVocabulary(newVocab);
+      return;
+    }
+    
+    // Add word to existing vocabulary
+    currentVocab.vocabulary.push({ word, definitions });
+    this.setVocabulary(currentVocab);
+  }
+
+  /**
+   * Remove a vocabulary word by its exact word match
+   */
+  removeVocabularyWord(wordToRemove: string): boolean {
+    const currentVocab = this.getVocabulary();
+    
+    if (!currentVocab || !currentVocab.vocabulary) {
+      return false;
+    }
+    
+    const initialLength = currentVocab.vocabulary.length;
+    currentVocab.vocabulary = currentVocab.vocabulary.filter(entry => 
+      entry.word.toLowerCase() !== wordToRemove.toLowerCase()
+    );
+    
+    // Check if any word was actually removed
+    if (currentVocab.vocabulary.length < initialLength) {
+      this.setVocabulary(currentVocab);
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /**
    * Validate the vocabulary for proper structure.
    * Returns an object with isValid and errors array.
    */
@@ -131,4 +175,4 @@ export class VocabularyStorageService {
     
     return { isValid: errors.length === 0, errors };
   }
-} 
+}

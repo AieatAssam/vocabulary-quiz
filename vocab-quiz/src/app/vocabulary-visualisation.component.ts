@@ -5,6 +5,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { VocabularyStorageService } from './vocabulary-storage.service';
 import { VocabularyOpenAIResponse } from './ivocabulary-openai-response-interface';
 
@@ -23,7 +28,13 @@ interface VocabEntry {
     MatCardModule, 
     MatIconModule, 
     MatButtonModule,
-    MatChipsModule
+    MatChipsModule,
+    MatDialogModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSnackBarModule
   ],
   templateUrl: './vocabulary-visualisation.component.html',
   styleUrls: ['./vocabulary-visualisation.component.scss']
@@ -32,10 +43,23 @@ export class VocabularyVisualisationComponent implements OnInit {
   vocabEntries: VocabEntry[] = [];
   displayedColumns = ['word', 'definitions', 'actions'];
   summary: { valid: number; invalid: number; errors: string[] } | null = null;
+  
+  // For adding new words
+  newWord = '';
+  newDefinition = '';
+  newDefinitions: string[] = [];
 
-  constructor(private vocabStorage: VocabularyStorageService) {}
+  constructor(
+    private vocabStorage: VocabularyStorageService,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
+  ) {}
 
   ngOnInit() {
+    this.loadVocabulary();
+  }
+  
+  loadVocabulary() {
     const vocab = this.vocabStorage.getVocabulary();
     this.vocabEntries = this.parseVocabulary(vocab);
     
@@ -78,4 +102,54 @@ export class VocabularyVisualisationComponent implements OnInit {
       }
     });
   }
-} 
+  
+  // Remove a vocabulary word
+  removeWord(word: string) {
+    if (confirm(`Are you sure you want to remove "${word}" from your vocabulary list?`)) {
+      if (this.vocabStorage.removeVocabularyWord(word)) {
+        this.snackBar.open(`Removed "${word}" from vocabulary`, 'Close', { duration: 3000 });
+        this.loadVocabulary(); // Refresh the list
+      } else {
+        this.snackBar.open(`Failed to remove "${word}"`, 'Close', { duration: 3000 });
+      }
+    }
+  }
+  
+  // Add a new definition to the temporary list
+  addDefinition() {
+    if (this.newDefinition.trim()) {
+      this.newDefinitions.push(this.newDefinition.trim());
+      this.newDefinition = '';
+    }
+  }
+  
+  // Remove a definition from the temporary list
+  removeDefinition(index: number) {
+    this.newDefinitions.splice(index, 1);
+  }
+  
+  // Submit the new word with its definitions
+  addNewWord() {
+    if (this.newWord.trim() && this.newDefinitions.length > 0) {
+      this.vocabStorage.addVocabularyWord(this.newWord.trim(), [...this.newDefinitions]);
+      this.snackBar.open(`Added "${this.newWord}" to vocabulary`, 'Close', { duration: 3000 });
+      
+      // Reset form
+      this.newWord = '';
+      this.newDefinition = '';
+      this.newDefinitions = [];
+      
+      // Refresh the vocabulary list
+      this.loadVocabulary();
+    } else {
+      this.snackBar.open('Please enter a word and at least one definition', 'Close', { duration: 3000 });
+    }
+  }
+  
+  // Cancel adding a new word
+  cancelAddWord() {
+    this.newWord = '';
+    this.newDefinition = '';
+    this.newDefinitions = [];
+  }
+}

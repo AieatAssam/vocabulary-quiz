@@ -15,6 +15,53 @@
       <span *ngFor="let err of summary.errors">{{err}}</span>
     </div>
 
+    <!-- Add new word form -->
+    <div class="add-word-form">
+      <h3>Add New Word</h3>
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Word</mat-label>
+          <input matInput [(ngModel)]="newWord" placeholder="Enter a new word" required>
+        </mat-form-field>
+      </div>
+      
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="definition-input">
+          <mat-label>Definition</mat-label>
+          <input matInput [(ngModel)]="newDefinition" placeholder="Enter a definition" 
+                (keyup.enter)="addDefinition()">
+        </mat-form-field>
+        <button mat-icon-button color="primary" (click)="addDefinition()" 
+                [disabled]="!newDefinition.trim()">
+          <mat-icon>add_circle</mat-icon>
+        </button>
+      </div>
+      
+      <!-- Current definitions list -->
+      <div class="definitions-preview" *ngIf="newDefinitions.length > 0">
+        <h4>Definitions:</h4>
+        <mat-chip-set>
+          <mat-chip *ngFor="let def of newDefinitions; let i = index" 
+                   color="primary" highlighted>
+            {{def}}
+            <button matChipRemove (click)="removeDefinition(i)">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+      
+      <div class="form-actions">
+        <button mat-button color="warn" (click)="cancelAddWord()">Cancel</button>
+        <button mat-raised-button color="primary" 
+                [disabled]="!newWord.trim() || newDefinitions.length === 0" 
+                (click)="addNewWord()">
+          Add Word
+        </button>
+      </div>
+    </div>
+
+    <!-- Vocabulary table -->
     <table mat-table [dataSource]="vocabEntries" class="mat-elevation-z2">
       <!-- Word Column -->
       <ng-container matColumnDef="word">
@@ -43,8 +90,9 @@
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let entry">
-          <button mat-icon-button *ngIf="!entry.error" color="primary" aria-label="Edit entry">
-            <mat-icon>edit</mat-icon>
+          <button mat-icon-button color="warn" aria-label="Remove word"
+                  (click)="removeWord(entry.word)">
+            <mat-icon>delete</mat-icon>
           </button>
         </td>
       </ng-container>
@@ -58,8 +106,5 @@
     <button mat-raised-button color="primary" [disabled]="summary && summary.invalid > 0">
       <mat-icon>check</mat-icon> Confirm Vocabulary
     </button>
-    <button mat-button color="accent">
-      <mat-icon>add</mat-icon> Add Word
-    </button>
   </mat-card-actions>
-</mat-card> 
+</mat-card>
