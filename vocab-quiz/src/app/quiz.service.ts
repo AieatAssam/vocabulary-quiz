@@ -213,7 +213,7 @@ export class QuizService {
 
   /**
    * Normalize text for comparison by removing case sensitivity,
-   * extra whitespace, and punctuation
+   * extra whitespace, punctuation, and leading articles (a, an, the)
    */
   private normalizeText(text: string): string {
     if (!text) return '';
@@ -223,12 +223,32 @@ export class QuizService {
       .trim()                   // Remove leading/trailing whitespace
       .replace(/\s+/g, ' ')     // Normalize spaces (multiple spaces to single space)
       .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '') // Remove punctuation
-      .replace(/\s+([,.])/g, '$1');  // Remove spaces before commas and periods
+      .replace(/\s+([,.])/g, '$1')  // Remove spaces before commas and periods
+      .replace(/^(a|an|the)\s+/i, '') // Remove leading articles (a, an, the)
+      .replace(/\s+(a|an|the)\s+/g, ' '); // Remove articles in the middle of the text
   }
 
-  private checkAnswer(question: QuizQuestion, userAnswer: string): boolean {
-    const normalizedUserAnswer = this.normalizeText(userAnswer);
+  /**
+   * Compare two strings for a match with and without articles
+   * Always performs case-insensitive comparison
+   */
+  private textMatches(text1: string, text2: string): boolean {
+    if (!text1 || !text2) return false;
     
+    // First try with our standard normalization
+    const normalized1 = this.normalizeText(text1);
+    const normalized2 = this.normalizeText(text2);
+    
+    if (normalized1 === normalized2) return true;
+    
+    // Additional checks for case insensitivity
+    // Though already handled by normalizeText, this is an extra safeguard
+    if (normalized1.toLowerCase() === normalized2.toLowerCase()) return true;
+    
+    return false;
+  }
+  
+  private checkAnswer(question: QuizQuestion, userAnswer: string): boolean {
     // For definition questions with multiple valid answers
     if (question.type === 'definition' && question.allAnswers && question.allAnswers.length > 0) {
       // Initialize matchedAnswers if it doesn't exist
@@ -238,12 +258,12 @@ export class QuizService {
       
       // Check if the user's answer matches any of the valid definitions
       const matchedDefinition = question.allAnswers.find(answer => 
-        this.normalizeText(answer) === normalizedUserAnswer
+        this.textMatches(answer, userAnswer)
       );
       
       if (matchedDefinition) {
         // If this is a new match (not already in matchedAnswers)
-        if (!question.matchedAnswers.includes(matchedDefinition)) {
+        if (!question.matchedAnswers.some(matched => this.textMatches(matched, matchedDefinition))) {
           question.matchedAnswers.push(matchedDefinition);
         }
         
@@ -266,8 +286,7 @@ export class QuizService {
     } 
     
     // For word questions or if there are no multiple definitions
-    const normalizedCorrectAnswer = this.normalizeText(question.answer);
-    return normalizedUserAnswer === normalizedCorrectAnswer;
+    return this.textMatches(question.answer, userAnswer);
   }
 
   private generateQuizId(): string {

@@ -99,7 +99,7 @@ import { DialogComponent } from './dialog.component';
               <div class="chip-container">
                 <mat-chip-listbox>
                   <mat-chip 
-                    *ngFor="let answer of getMatchedAnswers()" 
+                    *ngFor="let answer of getFormattedMatchedAnswers()" 
                     color="primary" 
                     selected>
                     <mat-icon matChipAvatar>check</mat-icon>
@@ -113,6 +113,16 @@ import { DialogComponent } from './dialog.component';
                 color="accent" 
                 [value]="currentQuestion?.completeness || 0">
               </mat-progress-bar>
+            </div>
+            
+            <!-- Multi-definition unmatched answers - displayed directly in the UI -->
+            <div *ngIf="currentQuestion?.type === 'definition' && isDefinitionMultiAnswerMode() && showMultiAnswerSummary" class="unmatched-answers-container">
+              <p class="unmatched-answers-title">Definitions you haven't matched yet:</p>
+              <div class="unmatched-list">
+                <ul>
+                  <li *ngFor="let answer of getUnmatchedAnswers()">{{ answer }}</li>
+                </ul>
+              </div>
             </div>
             
             <!-- Feedback when answer is submitted -->
@@ -152,6 +162,20 @@ import { DialogComponent } from './dialog.component';
             <!-- Definition Mode with Multiple Answers -->
             <ng-container *ngIf="isDefinitionMultiAnswerMode()">
               <button 
+                mat-button 
+                color="primary" 
+                *ngIf="!showMultiAnswerSummary"
+                (click)="toggleMultiAnswerSummary()">
+                <mat-icon>visibility</mat-icon> Show All Definitions
+              </button>
+              <button 
+                mat-button 
+                color="primary" 
+                *ngIf="showMultiAnswerSummary"
+                (click)="toggleMultiAnswerSummary()">
+                <mat-icon>visibility_off</mat-icon> Hide Definitions
+              </button>
+              <button 
                 mat-raised-button 
                 color="primary" 
                 *ngIf="hasUserAnswer()"
@@ -162,14 +186,14 @@ import { DialogComponent } from './dialog.component';
                 mat-raised-button 
                 color="accent" 
                 *ngIf="!isLastQuestion"
-                (click)="showAnswerSummary()">
+                (click)="proceedToNextQuestion()">
                 <mat-icon>arrow_forward</mat-icon> Next Question
               </button>
               <button 
                 mat-raised-button 
                 color="accent" 
                 *ngIf="isLastQuestion"
-                (click)="showAnswerSummary()">
+                (click)="completeQuiz()">
                 <mat-icon>done_all</mat-icon> Finish Quiz
               </button>
             </ng-container>
@@ -302,44 +326,52 @@ import { DialogComponent } from './dialog.component';
 
     .question-type mat-icon {
       margin-right: 0.5rem;
-      color: #3f51b5;
+      font-size: 1.2rem;
+      height: 1.2rem;
+      width: 1.2rem;
+      vertical-align: middle;
     }
 
     .question-prompt {
       font-size: 1.5rem;
-      font-weight: 500;
+      font-weight: bold;
       padding: 1rem;
-      background-color: #f9f9f9;
+      background-color: #f5f5f5;
       border-radius: 8px;
+      color: #3f51b5;
     }
 
     .answer-container {
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
 
     .answer-field {
       width: 100%;
+      font-size: 1.1rem;
     }
 
     .feedback-container {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
+      margin-top: 1rem;
       padding: 1rem;
       border-radius: 8px;
-      margin-top: 1rem;
+      background-color: #f9f9f9;
     }
 
     .feedback-container.correct {
-      background-color: rgba(76, 175, 80, 0.1);
+      background-color: #e8f5e9;
     }
 
     .feedback-container.incorrect {
-      background-color: rgba(244, 67, 54, 0.1);
+      background-color: #ffebee;
     }
 
     .feedback-container mat-icon {
-      font-size: 1.5rem;
       margin-right: 1rem;
+      font-size: 1.5rem;
+      height: 1.5rem;
+      width: 1.5rem;
     }
 
     .feedback-container.correct mat-icon {
@@ -351,64 +383,32 @@ import { DialogComponent } from './dialog.component';
     }
 
     .feedback-text p {
-      margin: 0;
+      margin: 0.5rem 0;
     }
 
     .correct-answer {
-      font-style: italic;
-      margin-top: 0.5rem !important;
-      color: #555;
+      font-weight: bold;
+      color: #4caf50;
     }
 
     .all-answers {
-      margin-top: 0.5rem;
+      margin-top: 1rem;
     }
-    
+
     .all-answers-title {
-      font-weight: 500;
-      margin-bottom: 0.25rem !important;
-      color: #555;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
     }
-    
+
     .all-answers ul {
       margin: 0;
       padding-left: 1.5rem;
     }
-    
-    .all-answers li {
-      margin-bottom: 0.25rem;
-      color: #555;
-    }
-    
-    .matched-answers-container {
-      margin: 1rem 0;
-      padding: 0.75rem;
-      background-color: rgba(63, 81, 181, 0.05);
-      border-radius: 8px;
-      border: 1px solid rgba(63, 81, 181, 0.1);
-    }
-    
-    .matched-answers-title {
-      font-weight: 500;
-      margin-bottom: 0.5rem;
-      color: #555;
-    }
-    
-    .chip-container {
-      margin-bottom: 0.75rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    
-    .completeness-bar {
-      margin-top: 0.5rem;
-    }
 
     .action-buttons {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      margin-top: 1.5rem;
     }
 
     .spacer {
@@ -422,26 +422,66 @@ import { DialogComponent } from './dialog.component';
 
     .results-score {
       font-size: 2rem;
+      margin-bottom: 2rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 1.5rem;
     }
 
     .results-score mat-icon {
-      font-size: 2.5rem;
-      height: 2.5rem;
-      width: 2.5rem;
       margin-right: 1rem;
+      font-size: 2rem;
+      height: 2rem;
+      width: 2rem;
     }
 
     .results-summary {
       margin-bottom: 2rem;
+      font-size: 1.1rem;
     }
 
-    .results-summary p {
-      margin: 0.5rem 0;
-      font-size: 1.1rem;
+    .matched-answers-container {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background-color: #e8f5e9;
+    }
+
+    .matched-answers-title {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: #2e7d32;
+    }
+
+    .chip-container {
+      margin-bottom: 1rem;
+    }
+
+    .completeness-bar {
+      margin-top: 0.5rem;
+    }
+
+    .unmatched-answers-container {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background-color: #fff8e1;
+      border: 1px solid #ffe082;
+    }
+
+    .unmatched-answers-title {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: #ff8f00;
+    }
+
+    .unmatched-list ul {
+      margin: 0;
+      padding-left: 1.5rem;
+    }
+
+    .unmatched-list li {
+      margin-bottom: 0.25rem;
     }
   `]
 })
@@ -449,54 +489,46 @@ export class QuizInterfaceComponent implements OnInit {
   currentQuiz: Quiz | null = null;
   userAnswer: string = '';
   answerSubmitted: boolean = false;
-  private enterKeyState: 'up' | 'down' = 'up';
-  private enterActionState: 'ready' | 'submitted' | 'next' = 'ready';
-
-  constructor(
-    private quizService: QuizService,
-    private vocabStorage: VocabularyStorageService,
-    private pdfExportService: PdfExportService,
-    private dialog: MatDialog,
-    private router: Router
-  ) {}
-
-  ngOnInit() {
-    // Check if there's saved vocabulary
-    if (!this.vocabStorage.getVocabulary()) {
-      this.router.navigate(['/']);
-    }
-  }
-
+  enterKeyState: 'up' | 'down' = 'up';
+  enterActionState: 'ready' | 'submitted' = 'ready';
+  showMultiAnswerSummary: boolean = false;
+  
   get currentQuestion(): QuizQuestion | undefined {
     if (!this.currentQuiz) return undefined;
     return this.currentQuiz.questions[this.currentQuiz.currentQuestionIndex];
   }
-
+  
   get isLastQuestion(): boolean {
     if (!this.currentQuiz) return false;
     return this.currentQuiz.currentQuestionIndex === this.currentQuiz.questions.length - 1;
   }
 
-  onStartQuiz(settings: QuizSettings) {
-    try {
-      this.currentQuiz = this.quizService.generateQuiz(settings);
-      this.currentQuiz.startTime = new Date();
-      this.answerSubmitted = false;
-      this.userAnswer = '';
-    } catch (error: any) {
-      console.error('Failed to start quiz:', error);
-      // Handle error more gracefully - redirect to home with alert
-      alert(error.message || 'Failed to create quiz. Please check your vocabulary list.');
-      this.router.navigate(['/']);
-    }
+  constructor(
+    private router: Router,
+    private quizService: QuizService,
+    private vocabStorage: VocabularyStorageService,
+    private pdfExportService: PdfExportService,
+    private dialog: MatDialog
+  ) {}
+
+  ngOnInit(): void {
+    // Initialize from the current quiz in service
+    this.currentQuiz = this.quizService.getCurrentQuiz();
   }
 
-  onCancelQuiz() {
+  onStartQuiz(settings: QuizSettings): void {
+    this.currentQuiz = this.quizService.generateQuiz(settings);
+    this.userAnswer = '';
+    this.answerSubmitted = false;
+    this.showMultiAnswerSummary = false;
+  }
+
+  onCancelQuiz(): void {
+    this.currentQuiz = null;
     this.router.navigate(['/']);
   }
 
-  submitAnswer() {
-    // Don't proceed if no quiz or empty answer
+  submitAnswer(): void {
     if (!this.currentQuiz || !this.userAnswer.trim()) return;
     
     // In definition multi-answer mode, we don't set answerSubmitted to true
@@ -523,31 +555,32 @@ export class QuizInterfaceComponent implements OnInit {
   }
 
   nextQuestion() {
-    // For definition multi-answer mode, we call showAnswerSummary instead
-    if (this.isDefinitionMultiAnswerMode()) {
-      this.showAnswerSummary();
-    } else if (!this.currentQuiz || !this.answerSubmitted) {
+    if (!this.currentQuiz || !this.answerSubmitted) {
       return;
-    } else {
-      // Standard behavior for word questions
-      if (this.quizService.nextQuestion()) {
-        this.answerSubmitted = false;
-        this.userAnswer = '';
-        this.enterActionState = 'ready';
-      }
+    }
+    
+    // Standard behavior for word questions
+    this.currentQuiz.currentQuestionIndex++;
+    if (this.currentQuiz.currentQuestionIndex < this.currentQuiz.questions.length) {
+      this.answerSubmitted = false;
+      this.userAnswer = '';
+      this.enterActionState = 'ready';
+      this.showMultiAnswerSummary = false;
     }
   }
   
   /**
-   * Proceeds to the next question after showing summary (used by dialog callback)
+   * Proceeds to the next question directly (used for multi-definition mode)
    */
   proceedToNextQuestion() {
     if (!this.currentQuiz) return;
     
-    if (this.quizService.nextQuestion()) {
+    this.currentQuiz.currentQuestionIndex++;
+    if (this.currentQuiz.currentQuestionIndex < this.currentQuiz.questions.length) {
       this.userAnswer = '';
-      this.answerSubmitted = false; // Reset for standard mode
+      this.answerSubmitted = false; 
       this.enterActionState = 'ready';
+      this.showMultiAnswerSummary = false;
     }
   }
 
@@ -555,14 +588,28 @@ export class QuizInterfaceComponent implements OnInit {
     // For definition multi-answer mode, we can complete the quiz at any time
     if (this.isDefinitionMultiAnswerMode()) {
       if (!this.currentQuiz) return;
-      this.quizService.completeQuiz();
+      this.currentQuiz.isComplete = true;
+      this.currentQuiz.endTime = new Date();
+      
+      // Calculate score
+      const totalQuestions = this.currentQuiz.questions.length;
+      const correctAnswers = this.currentQuiz.questions.filter(q => q.isCorrect).length;
+      this.currentQuiz.score = (correctAnswers / totalQuestions) * 100;
+      
       this.enterActionState = 'ready';
     } 
     // For standard mode, require answer submission first
     else if (!this.currentQuiz || !this.answerSubmitted) {
       return;
     } else {
-      this.quizService.completeQuiz();
+      this.currentQuiz.isComplete = true;
+      this.currentQuiz.endTime = new Date();
+      
+      // Calculate score
+      const totalQuestions = this.currentQuiz.questions.length;
+      const correctAnswers = this.currentQuiz.questions.filter(q => q.isCorrect).length;
+      this.currentQuiz.score = (correctAnswers / totalQuestions) * 100;
+      
       this.enterActionState = 'ready';
     }
   }
@@ -572,6 +619,7 @@ export class QuizInterfaceComponent implements OnInit {
     this.currentQuiz = null;
     this.userAnswer = '';
     this.answerSubmitted = false;
+    this.showMultiAnswerSummary = false;
   }
 
   viewVocabulary() {
@@ -616,36 +664,23 @@ export class QuizInterfaceComponent implements OnInit {
     if (this.enterKeyState === 'up') {
       this.enterKeyState = 'down';
 
-      // Prevent default to avoid form submissions or button clicks
-      event.preventDefault();
-
-      // For definition multi-answer mode
-      if (this.currentQuiz && this.isDefinitionMultiAnswerMode()) {
-        if (this.userAnswer?.trim()) {
-          // Submit the current definition
+      // Submit answer in input field - only prevent default when handling text input submissions
+      if (this.currentQuiz && this.userAnswer?.trim()) {
+        // Prevent default only for input field submissions to avoid capturing elsewhere
+        if (document.activeElement?.tagName === 'INPUT') {
+          event.preventDefault();
           this.submitAnswer();
-          this.enterActionState = 'ready';
-        } else {
-          // Show answer summary when input is empty (user indicates they are done)
-          this.showAnswerSummary();
-          this.enterActionState = 'ready';
         }
+        return;
       }
-      // Standard behavior for word questions
-      else if (this.currentQuiz) {
-        // If we're ready to submit an answer
-        if (this.enterActionState === 'ready' && !this.answerSubmitted && this.userAnswer?.trim()) {
-          this.submitAnswer();
-          this.enterActionState = 'submitted'; // Mark that we've just submitted
-        }
-        // If we're ready to go to the next question
-        else if (this.enterActionState === 'submitted' && this.answerSubmitted) {
-          if (this.isLastQuestion) {
-            this.completeQuiz();
-          } else {
-            this.nextQuestion();
-          }
-          this.enterActionState = 'ready'; // Reset to ready for the next question
+      
+      // For standard quiz mode, handle other enter key actions (next question, complete quiz)
+      if (this.currentQuiz && !this.isDefinitionMultiAnswerMode() && this.answerSubmitted) {
+        event.preventDefault();
+        if (this.isLastQuestion) {
+          this.completeQuiz();
+        } else {
+          this.nextQuestion();
         }
       }
     }
@@ -697,9 +732,11 @@ export class QuizInterfaceComponent implements OnInit {
   
   /**
    * Gets a text representation of the completeness
+   * Uses formatted matched answers to get a more accurate unique count
    */
   getCompletenessText(): string {
-    const matchedCount = this.currentQuestion?.matchedAnswers?.length || 0;
+    const formattedMatched = this.getFormattedMatchedAnswers();
+    const matchedCount = formattedMatched.length;
     const totalCount = this.currentQuestion?.allAnswers?.length || 0;
     
     return `${matchedCount}/${totalCount} complete`;
@@ -775,54 +812,61 @@ export class QuizInterfaceComponent implements OnInit {
   }
 
   /**
-   * Shows a summary dialog with all valid answers before proceeding to the next question
+   * Toggles the display of all answers in multi-definition mode
    */
-  showAnswerSummary(): void {
-    if (!this.currentQuestion || !this.currentQuestion.allAnswers) return;
+  toggleMultiAnswerSummary(): void {
+    this.showMultiAnswerSummary = !this.showMultiAnswerSummary;
+  }
+
+  /**
+   * Gets unmatched answers for the current definition question
+   */
+  getUnmatchedAnswers(): string[] {
+    if (!this.currentQuestion?.allAnswers) return [];
     
-    const matchedCount = this.currentQuestion.matchedAnswers?.length || 0;
-    const totalCount = this.currentQuestion.allAnswers.length;
+    const formattedMatched = this.getFormattedMatchedAnswers();
     
-    // Create message showing matched and unmatched answers
-    let message = `<p><strong>You matched ${matchedCount} out of ${totalCount} definitions:</strong></p>`;
-    
-    // Show matched answers
-    if (matchedCount > 0 && this.currentQuestion.matchedAnswers) {
-      message += '<p><strong>✓ Matched:</strong></p><ul>';
-      for (const answer of this.currentQuestion.matchedAnswers) {
-        message += `<li>${answer}</li>`;
-      }
-      message += '</ul>';
-    }
-    
-    // Show unmatched answers
-    const unmatched = this.currentQuestion.allAnswers.filter(answer => 
-      !this.currentQuestion?.matchedAnswers?.includes(answer)
+    // Return all answers that haven't been matched yet
+    return this.currentQuestion.allAnswers.filter(answer => 
+      !formattedMatched.some(matched => this.isSimilarAnswer(matched, answer))
     );
+  }
+
+  /**
+   * Formats matched answers for display by removing duplicates
+   * and ensuring proper presentation
+   */
+  getFormattedMatchedAnswers(): string[] {
+    if (!this.currentQuestion?.matchedAnswers) return [];
     
-    if (unmatched.length > 0) {
-      message += '<p><strong>✗ Not matched:</strong></p><ul>';
-      for (const answer of unmatched) {
-        message += `<li>${answer}</li>`;
+    // Filter out duplicate answers that might be normalized versions of each other
+    const uniqueAnswers: string[] = [];
+    
+    for (const answer of this.currentQuestion.matchedAnswers) {
+      // Skip if we already have a similar answer
+      if (!uniqueAnswers.some(existing => this.isSimilarAnswer(existing, answer))) {
+        uniqueAnswers.push(answer);
       }
-      message += '</ul>';
     }
     
-    // Show dialog
-    this.dialog.open(DialogComponent, {
-      width: '400px',
-      data: { 
-        title: `Definition Summary for "${this.currentQuestion.prompt}"`,
-        message: message,
-        showCloseButton: true
-      }
-    }).afterClosed().subscribe(() => {
-      // Move to next question after dialog is closed
-      if (this.isLastQuestion) {
-        this.completeQuiz();
-      } else {
-        this.proceedToNextQuestion();
-      }
-    });
+    return uniqueAnswers;
+  }
+  
+  /**
+   * Checks if two answers are similar (for display purposes)
+   * This helps identify answers that differ only by articles or case
+   */
+  private isSimilarAnswer(answer1: string, answer2: string): boolean {
+    if (!answer1 || !answer2) return false;
+    
+    // Remove leading articles and convert to lowercase for case-insensitive comparison
+    const stripped1 = answer1.toLowerCase().replace(/^(a|an|the)\s+/i, '').trim();
+    const stripped2 = answer2.toLowerCase().replace(/^(a|an|the)\s+/i, '').trim();
+    
+    // Remove punctuation and normalize spacing for a more thorough comparison
+    const normalized1 = stripped1.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').replace(/\s+/g, ' ');
+    const normalized2 = stripped2.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').replace(/\s+/g, ' ');
+    
+    return normalized1 === normalized2;
   }
 }
