@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -485,7 +485,7 @@ import { DialogComponent } from './dialog.component';
     }
   `]
 })
-export class QuizInterfaceComponent implements OnInit {
+export class QuizInterfaceComponent implements OnInit, AfterViewInit {
   currentQuiz: Quiz | null = null;
   userAnswer: string = '';
   answerSubmitted: boolean = false;
@@ -522,6 +522,7 @@ export class QuizInterfaceComponent implements OnInit {
     this.userAnswer = '';
     this.answerSubmitted = false;
     this.movingToNextQuestion = false;
+    this.focusAnswerInput();
   }
 
   onCancelQuiz(): void {
@@ -567,6 +568,7 @@ export class QuizInterfaceComponent implements OnInit {
       this.userAnswer = '';
       this.enterActionState = 'ready';
       this.movingToNextQuestion = false;
+      this.focusAnswerInput();
     }
   }
   
@@ -582,6 +584,7 @@ export class QuizInterfaceComponent implements OnInit {
       this.answerSubmitted = false; 
       this.enterActionState = 'ready';
       this.movingToNextQuestion = false;
+      this.focusAnswerInput();
     }
   }
 
@@ -670,27 +673,49 @@ export class QuizInterfaceComponent implements OnInit {
     event.preventDefault();
     event.stopPropagation();
     
+    // Special handling for submit buttons
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'BUTTON') {
+      // Let the button handle it
+      return;
+    }
+    
     console.log('Enter pressed - State:', { 
       hasInput: !!this.userAnswer?.trim(),
       answered: this.answerSubmitted,
       isMultiMode: this.isDefinitionMultiAnswerMode(),
       moving: this.movingToNextQuestion,
-      isLast: this.isLastQuestion
+      isLast: this.isLastQuestion,
+      enterActionState: this.enterActionState
     });
     
-    // CASE 1: User has typed something - submit the answer
-    if (this.userAnswer?.trim()) {
-      this.submitAnswer();
-      return;
+    // CASE 1: Standard mode - check enterActionState
+    if (!this.isDefinitionMultiAnswerMode()) {
+      // If we have answer text, submit it
+      if (this.userAnswer?.trim() && !this.answerSubmitted) {
+        console.log('Submitting answer in word mode');
+        this.submitAnswer();
+        return;
+      }
+      
+      // If we've already submitted an answer, move to next
+      if (this.answerSubmitted) {
+        console.log('Moving to next question in word mode');
+        if (this.isLastQuestion) {
+          this.completeQuiz();
+        } else {
+          this.nextQuestion();
+        }
+        return;
+      }
+      
+      return; // Do nothing else in word mode
     }
     
-    // CASE 2: Standard mode with answered question - move to next
-    if (!this.isDefinitionMultiAnswerMode() && this.answerSubmitted) {
-      if (this.isLastQuestion) {
-        this.completeQuiz();
-      } else {
-        this.nextQuestion();
-      }
+    // CASE 2: Definition mode - handle input submission
+    if (this.userAnswer?.trim()) {
+      console.log('Submitting answer in definition mode');
+      this.submitAnswer();
       return;
     }
     
@@ -898,5 +923,22 @@ export class QuizInterfaceComponent implements OnInit {
     const normalized2 = stripped2.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').replace(/\s+/g, ' ');
     
     return normalized1 === normalized2;
+  }
+
+  /**
+   * Focuses the answer input element
+   */
+  focusAnswerInput(): void {
+    setTimeout(() => {
+      if (this.answerInput?.nativeElement) {
+        this.answerInput.nativeElement.focus();
+      }
+    }, 0);
+  }
+
+  ngAfterViewInit() {
+    if (this.currentQuiz) {
+      this.focusAnswerInput();
+    }
   }
 }
