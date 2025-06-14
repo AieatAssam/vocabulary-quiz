@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, HostListener, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -85,7 +85,7 @@ import { DialogComponent } from './dialog.component';
                 matInput 
                 [(ngModel)]="userAnswer" 
                 [disabled]="answerSubmitted"
-                #answerInput
+                (keyup.enter)="submitAnswer()"
                 placeholder="Type your answer here"
                 autocomplete="off"
                 autocorrect="off"
@@ -485,15 +485,14 @@ import { DialogComponent } from './dialog.component';
     }
   `]
 })
-export class QuizInterfaceComponent implements OnInit, AfterViewInit {
+export class QuizInterfaceComponent implements OnInit {
   currentQuiz: Quiz | null = null;
   userAnswer: string = '';
   answerSubmitted: boolean = false;
+  enterKeyState: 'up' | 'down' = 'up';
   enterActionState: 'ready' | 'submitted' = 'ready';
   movingToNextQuestion: boolean = false;
   
-  @ViewChild('answerInput') answerInput!: ElementRef<HTMLInputElement>;
-
   get currentQuestion(): QuizQuestion | undefined {
     if (!this.currentQuiz) return undefined;
     return this.currentQuiz.questions[this.currentQuiz.currentQuestionIndex];
@@ -522,7 +521,6 @@ export class QuizInterfaceComponent implements OnInit, AfterViewInit {
     this.userAnswer = '';
     this.answerSubmitted = false;
     this.movingToNextQuestion = false;
-    this.focusAnswerInput();
   }
 
   onCancelQuiz(): void {
@@ -536,22 +534,13 @@ export class QuizInterfaceComponent implements OnInit, AfterViewInit {
     // In definition multi-answer mode, we don't set answerSubmitted to true
     // We just add the answer and clear the input field for the next definition
     if (this.isDefinitionMultiAnswerMode()) {
-      const singleSolution = this.currentQuestion?.allAnswers?.length === 1;
+      // Split input by spaces to handle multiple words at once
+      const words = this.userAnswer.trim().split(/\s+/);
       
-      if (singleSolution) {
-        // If there's only one expected answer, submit the entire input without splitting
-        if (this.userAnswer.trim()) {
-          this.quizService.submitAnswer(this.userAnswer.trim());
-        }
-      } else {
-        // If there are multiple expected answers, split input by spaces to handle multiple words at once
-        const words = this.userAnswer.trim().split(/\s+/);
-        
-        // Process each word individually
-        for (const word of words) {
-          if (word.trim()) {
-            this.quizService.submitAnswer(word.trim());
-          }
+      // Process each word individually
+      for (const word of words) {
+        if (word.trim()) {
+          this.quizService.submitAnswer(word.trim());
         }
       }
       
@@ -577,7 +566,6 @@ export class QuizInterfaceComponent implements OnInit, AfterViewInit {
       this.userAnswer = '';
       this.enterActionState = 'ready';
       this.movingToNextQuestion = false;
-      this.focusAnswerInput();
     }
   }
   
@@ -593,7 +581,6 @@ export class QuizInterfaceComponent implements OnInit, AfterViewInit {
       this.answerSubmitted = false; 
       this.enterActionState = 'ready';
       this.movingToNextQuestion = false;
-      this.focusAnswerInput();
     }
   }
 
@@ -671,45 +658,21 @@ export class QuizInterfaceComponent implements OnInit, AfterViewInit {
   }
 
   // Track Enter key down
-  @HostListener('document:keydown', ['$event'])
-  handleKeyDown(event: KeyboardEvent) {
-    // Only handle Enter key and if there's a current quiz
-    if (event.key !== 'Enter' || !this.currentQuiz) {
-      return;
-    }
-    
-    // Prevent default behavior for Enter key to stop form submission
-    event.preventDefault();
-    event.stopPropagation();
-    
-    // Special handling for submit buttons
-    const target = event.target as HTMLElement;
-    if (target.tagName === 'BUTTON') {
-      // Let the button handle it
-      return;
-    }
-    
-    console.log('Enter pressed - State:', { 
-      hasInput: !!this.userAnswer?.trim(),
-      answered: this.answerSubmitted,
-      isMultiMode: this.isDefinitionMultiAnswerMode(),
-      moving: this.movingToNextQuestion,
-      isLast: this.isLastQuestion,
-      enterActionState: this.enterActionState
-    });
-    
-    // CASE 1: Standard mode - check enterActionState
-    if (!this.isDefinitionMultiAnswerMode()) {
-      // If we have answer text, submit it
-      if (this.userAnswer?.trim() && !this.answerSubmitted) {
-        console.log('Submitting answer in word mode');
+  @HostListener('window:keydown.enter', ['$event'])
+  handleEnterKeyDown(event: KeyboardEvent) {
+    // Only process if the key was previously up and there's a current quiz
+    if (this.enterKeyState === 'up' && this.currentQuiz) {
+      this.enterKeyState = 'down';
+      event.preventDefault(); // Always prevent default to avoid form submission
+      
+      // CASE 1: User has typed something - submit the answer
+      if (this.userAnswer?.trim()) {
         this.submitAnswer();
         return;
       }
       
-      // If we've already submitted an answer, move to next
-      if (this.answerSubmitted) {
-        console.log('Moving to next question in word mode');
+      // CASE 2: Standard mode with answered question - move to next
+      if (!this.isDefinitionMultiAnswerMode() && this.answerSubmitted) {
         if (this.isLastQuestion) {
           this.completeQuiz();
         } else {
@@ -718,36 +681,31 @@ export class QuizInterfaceComponent implements OnInit, AfterViewInit {
         return;
       }
       
-      return; // Do nothing else in word mode
-    }
-    
-    // CASE 2: Definition mode - handle input submission
-    if (this.userAnswer?.trim()) {
-      console.log('Submitting answer in definition mode');
-      this.submitAnswer();
-      return;
-    }
-    
-    // CASE 3: Multi-definition mode - handle two-step navigation
-    if (this.isDefinitionMultiAnswerMode()) {
-      // Empty input field is the signal to continue
-      if (!this.userAnswer?.trim()) {
-        if (!this.movingToNextQuestion) {
-          // First press - show definitions
-          this.prepareToMoveNext();
-        } else {
-          // Second press - proceed to next question/finish
-          if (this.isLastQuestion) {
-            this.completeQuiz();
+      // CASE 3: Multi-definition mode - handle two-step navigation
+      if (this.isDefinitionMultiAnswerMode()) {
+        // Empty input field is the signal to continue
+        if (!this.userAnswer?.trim()) {
+          if (!this.movingToNextQuestion) {
+            // First press - show definitions
+            this.prepareToMoveNext();
           } else {
-            this.proceedToNextQuestion();
+            // Second press - proceed to next question/finish
+            if (this.isLastQuestion) {
+              this.completeQuiz();
+            } else {
+              this.proceedToNextQuestion();
+            }
           }
         }
       }
     }
   }
 
-  // No longer need the Enter key up handler
+  // Track Enter key up
+  @HostListener('window:keyup.enter', ['$event'])
+  handleEnterKeyUp(event: KeyboardEvent) {
+    this.enterKeyState = 'up';
+  }
 
   /**
    * Checks if the current question has multiple accepted answers
@@ -932,22 +890,5 @@ export class QuizInterfaceComponent implements OnInit, AfterViewInit {
     const normalized2 = stripped2.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').replace(/\s+/g, ' ');
     
     return normalized1 === normalized2;
-  }
-
-  /**
-   * Focuses the answer input element
-   */
-  focusAnswerInput(): void {
-    setTimeout(() => {
-      if (this.answerInput?.nativeElement) {
-        this.answerInput.nativeElement.focus();
-      }
-    }, 0);
-  }
-
-  ngAfterViewInit() {
-    if (this.currentQuiz) {
-      this.focusAnswerInput();
-    }
   }
 }
