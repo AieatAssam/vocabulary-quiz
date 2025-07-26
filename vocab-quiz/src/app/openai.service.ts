@@ -38,7 +38,7 @@ When multiple definitions are supplied (synonyms or other words for the same mea
 e.g. "cake, pastry, dessert" should be split into three entries: "cake", "pastry", "dessert". "spring -> brook or jump into action" should be split into two entries: "brook" and "jump into action".
 Only extract these from the image, do not supplement with any additional information! If it is not in the image, do not include it in the response!
 
-Exammple:
+Example:
 | word | definition |
 |------|------------|
 | cake | pastry, dessert |

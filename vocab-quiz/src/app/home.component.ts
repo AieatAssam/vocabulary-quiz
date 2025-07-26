@@ -319,8 +319,8 @@ export class HomeComponent implements OnInit {
   }
   
   openSettings() {
-    // This would normally open a dialog, but for this implementation
-    // we'll just move to the next step
+    // Advance to the image step; API settings are configured
+    // through the header dialog in this app
     this.currentStep = 'image';
   }
   

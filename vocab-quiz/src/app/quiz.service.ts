@@ -56,6 +56,7 @@ export class QuizService {
       title: `Vocabulary Quiz (${settings.quizType})`,
       settings,
       questions,
+      startTime: new Date(),
       currentQuestionIndex: 0,
       isComplete: false
     };

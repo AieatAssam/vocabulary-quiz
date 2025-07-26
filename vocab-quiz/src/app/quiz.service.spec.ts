@@ -38,6 +38,17 @@ describe('QuizService', () => {
     expect(service).toBeTruthy();
   });
 
+  it('should set startTime when generating a quiz', () => {
+    const quiz = service.generateQuiz({
+      quizType: 'word',
+      questionCount: 1,
+      randomizeOrder: false
+    });
+
+    expect(quiz.startTime).toBeDefined();
+    expect(quiz.startTime instanceof Date).toBeTrue();
+  });
+
   describe('Multiple word definition matching', () => {
     let defQuestion: QuizQuestion;
 
