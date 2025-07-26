@@ -60,6 +60,7 @@ The application uses various performance optimizations to ensure a smooth user e
 ### Prerequisites
 - Node.js (v16 or higher)
 - Angular CLI (v17 or higher)
+  - Install globally with `npm install -g @angular/cli`
 
 ### Installation
 1. Clone the repository
